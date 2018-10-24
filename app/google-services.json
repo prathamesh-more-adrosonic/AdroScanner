@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "1095182917496",
+    "firebase_url": "https://adroscanner-ad02.firebaseio.com",
+    "project_id": "adroscanner-ad02",
+    "storage_bucket": "adroscanner-ad02.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1095182917496:android:8ddbe64f8fb1c4c3",
+        "android_client_info": {
+          "package_name": "com.adrosonic.adroscanner"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1095182917496-g0939p5d91q2ko86u673krdplobuu583.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.adrosonic.adroscanner",
+            "certificate_hash": "70303e9f7774e635174ede6eb0744fa867c5abb1"
+          }
+        },
+        {
+          "client_id": "1095182917496-itb34u6fhtnmkigaogo0tnlapet1spmt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsjCA-8OEN18Wv-zQO-zh8YgouPoqW32U"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1095182917496-itb34u6fhtnmkigaogo0tnlapet1spmt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1095182917496-0i6cclplgdbie53c58krp43fbd87u7s3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.adrosonic.AdroScanner"
+              }
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
