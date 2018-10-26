@@ -20,4 +20,6 @@
     <string name="save">Save</string>
     <string name="company">Company</string>
     <string name="website">Website</string>
+    <string name="sign_in">SIGN IN</string>
+    <string name="google">Google</string>
 </resources>

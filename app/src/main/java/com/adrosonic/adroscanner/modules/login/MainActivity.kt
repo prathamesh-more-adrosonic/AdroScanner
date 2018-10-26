@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         activityMainBinding = setContentView(this, R.layout.activity_main)
-        var auth = (application.applicationContext as App).auth
+        val auth = (application.applicationContext as App).auth
         if (auth.currentUser != null){
             finish()
             startActivity(Intent(applicationContext, LandingActivity::class.java))

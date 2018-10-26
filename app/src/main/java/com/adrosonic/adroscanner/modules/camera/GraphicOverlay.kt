@@ -43,8 +43,7 @@ class GraphicOverlay(context: Context, attrs: AttributeSet): View(context, attrs
      * this and implement the {@link Graphic#draw(Canvas)} method to define the graphics element. Add
      * instances to the overlay using {@link GraphicOverlay#add(Graphic)}.
      */
-    abstract class Graphic(overlay: GraphicOverlay) {
-        private val overlay: GraphicOverlay = overlay
+    abstract class Graphic(private val overlay: GraphicOverlay) {
         /**
          * Returns the application context of the app.
          */
@@ -141,10 +140,11 @@ class GraphicOverlay(context: Context, attrs: AttributeSet): View(context, attrs
         }
         postInvalidate()
     }
+
     /**
      * Draws the overlay with its associated graphic objects.
      */
-    protected override fun onDraw(canvas:Canvas) {
+    override fun onDraw(canvas:Canvas) {
         super.onDraw(canvas)
         synchronized (lock) {
             if ((previewWidth != 0) && (previewHeight != 0))

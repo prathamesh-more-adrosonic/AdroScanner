@@ -35,7 +35,6 @@ import com.google.firebase.ml.vision.text.FirebaseVisionText
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
-import com.adrosonic.adroscanner.modules.camera.CameraPreview
 
 class CameraActivity : AppCompatActivity() {
 
@@ -70,6 +69,7 @@ class CameraActivity : AppCompatActivity() {
             // devices it is 270 degrees. For devices with a sensor orientation of
             // 270, rotate the image an additional 180 ((270 + 270) % 360) degrees.
             val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
             val sensorOrientation = cameraManager
                     .getCameraCharacteristics(cameraId)
                     .get(CameraCharacteristics.SENSOR_ORIENTATION)!!
@@ -199,7 +199,7 @@ class CameraActivity : AppCompatActivity() {
             camera?.autoFocus { success, camera ->
                if (success) {
                    camera?.takePicture(null, null, picture)
-                   control.visibility = View.GONE
+                   control.visibility = View.INVISIBLE
                    results_btn.visibility = View.VISIBLE
                }
             }
@@ -215,8 +215,8 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun performImageProcessing(data: ByteArray): Bitmap{
-//        val bitmap = getScaledBitmap(data,camera_preview.height,camera_preview.width)
-        val bitmap = getScaledBitmap(data,camera_preview.width,(camera_preview.width*camera_preview.width)/camera_preview.height)
+        val bitmap = getScaledBitmap(data,image_view.width,image_view.height)
+//        val bitmap = getScaledBitmap(data,camera_preview.width,(camera_preview.width*camera_preview.width)/camera_preview.height)
         return bitmap.rotate(rotation*2)
     }
 
@@ -276,7 +276,7 @@ class CameraActivity : AppCompatActivity() {
         blockTexts.forEach { block ->
             val lineTexts = block.lines
             lineTexts.forEach {line ->
-                line.boundingBox?.offset(0,(camera_preview.height - ((camera_preview.width*camera_preview.width)/camera_preview.height))/2)
+//                line.boundingBox?.offset(0,(camera_preview.height - ((camera_preview.width*camera_preview.width)/camera_preview.height))/2)
                 val textGraphic = TextGraphic(graphicOverlay, line)
                 graphicOverlay.add(textGraphic)
             }
@@ -292,12 +292,28 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun getScaledBitmap(originalImage: ByteArray, newWidth: Int,newHeight: Int): Bitmap{
-
+        Log.i("Image Size","${image_view.width}/${image_view.height}")
+        Log.i("Preview Size","${camera_preview.width}/${camera_preview.height}")
         val bitmapImage = BitmapFactory.decodeByteArray(originalImage, 0, originalImage.size)
+        Log.i("Camera Size","${camera?.parameters?.previewSize?.width}/${camera?.parameters?.previewSize?.height}")
+        Log.i("Picture Size","${camera?.parameters?.pictureSize?.width}/${camera?.parameters?.pictureSize?.height}")
+        Log.i("BitMap Size","${bitmapImage.width}/${bitmapImage.height}")
+        val camWidth = bitmapImage.width
+        val camHeight = bitmapImage.height
+        val ratio = camWidth.toDouble()/camHeight
+        val offset = (newWidth*ratio) - newHeight
+        return if (offset > 0){
+            val newOffset = (offset*camWidth)/(newWidth*ratio)
+            val bitmapCrop = Bitmap.createBitmap(bitmapImage,0,0,camWidth-newOffset.toInt(),camHeight)
+            val mutableBitmapImage = Bitmap.createScaledBitmap(bitmapCrop,newHeight,newWidth,false)
+            bitmapImage.recycle()
+            mutableBitmapImage
+        }else{
+            Bitmap.createScaledBitmap(bitmapImage,newHeight,newWidth,false)
+        }
+//        bitmapCrop.recycle()
 
-        val mutableBitmapImage = Bitmap.createScaledBitmap(bitmapImage,newWidth,newHeight,false)
-        bitmapImage.recycle()
-        return mutableBitmapImage
+//        return bitmapCrop
     }
 
     fun Bitmap.rotate(degrees: Float): Bitmap {

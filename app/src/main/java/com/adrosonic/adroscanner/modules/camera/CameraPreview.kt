@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.View
 import java.io.IOException
 
 /** A basic Camera preview class */
@@ -23,6 +24,7 @@ class CameraPreview(
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+
         // The Surface has been created, now tell the camera where to draw the preview.
         mCamera.apply {
             try {
@@ -57,8 +59,12 @@ class CameraPreview(
         // reformatting changes here
 
         // start preview with new settings
+//        val parameters = mCamera.parameters
+//        mCamera.parameters.setPreviewSize(1088,1088)
+//        mCamera.parameters = parameters
         mCamera.apply {
             try {
+
                 val rotation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     CameraActivity.getRotationCompensation("0",context as CameraActivity,context).toInt()
                 } else 90
@@ -69,5 +75,25 @@ class CameraPreview(
                 Log.d("starting preview", e.message)
             }
         }
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val height = View.resolveSize(suggestedMinimumHeight,widthMeasureSpec)
+        val width = View.resolveSize(suggestedMinimumWidth,heightMeasureSpec)
+
+        val ratio = mCamera.parameters.previewSize.width.toDouble()/mCamera.parameters.previewSize.height
+
+//        setMeasuredDimension(mCamera.parameters.previewSize.height,mCamera.parameters.previewSize.width)
+        setMeasuredDimension(height,(height*ratio).toInt())
+//        supportedPreviewSize.forEach {
+//            val ratio = (it.width/it.height).toDouble()
+//            if (Math.abs(ratio - targetRatio) > 0.1)
+//            return@forEach
+//            if (Math.abs(it.height - height) < Double.MAX_VALUE){
+//                val optimalRatio = (it.width/it.height).toFloat()
+//                setMeasuredDimension(it.height,(it.height*optimalRatio).toInt())
+//            }
+//        }
+//        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 }
