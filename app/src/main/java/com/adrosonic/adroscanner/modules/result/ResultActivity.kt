@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.databinding.DataBindingUtil.setContentView
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.ContactsContract
@@ -36,9 +39,11 @@ class ResultActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this,PERMISSIONS,PERMISSION_ALL)
         }
         user = intent.getParcelableExtra("user")
+        val bitmap = BitmapFactory.decodeByteArray(user.image,0,user.image!!.size)
+        imageViewResult.setImageBitmap(bitmap.rotate(180f))
         Log.i("Result",user.toString())
-        if (user.bitmap != null)
-        activityResultBinding.imageViewResult.setImageBitmap(user.bitmap)
+//        if (user.bitmap != null)
+//        activityResultBinding.imageViewResult.setImageBitmap(user.bitmap)
         activityResultBinding.user = user
     }
 
@@ -117,6 +122,11 @@ class ResultActivity : AppCompatActivity() {
             }
             else -> false
         }
+    }
+
+    fun Bitmap.rotate(degrees: Float): Bitmap {
+        val matrix = Matrix().apply { postRotate(degrees) }
+        return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
     }
 
     companion object {

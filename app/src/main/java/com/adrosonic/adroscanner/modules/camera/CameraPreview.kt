@@ -12,7 +12,7 @@ import java.io.IOException
 /** A basic Camera preview class */
 class CameraPreview(
         context: Context,
-        private val mCamera: Camera
+        private var mCamera: Camera ?= null
 ) : SurfaceView(context), SurfaceHolder.Callback {
 
     private val mHolder: SurfaceHolder = holder.apply {
@@ -23,10 +23,12 @@ class CameraPreview(
         setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS)
     }
 
+    var supportedPreviewSizes: MutableList<Camera.Size> ?= null
+
     override fun surfaceCreated(holder: SurfaceHolder) {
 
         // The Surface has been created, now tell the camera where to draw the preview.
-        mCamera.apply {
+        mCamera?.apply {
             try {
                 setPreviewDisplay(holder)
                 startPreview()
@@ -50,7 +52,7 @@ class CameraPreview(
 
         // stop preview before making changes
         try {
-            mCamera.stopPreview()
+            mCamera?.stopPreview()
         } catch (e: Exception) {
             // ignore: tried to stop a non-existent preview
         }
@@ -62,11 +64,15 @@ class CameraPreview(
 //        val parameters = mCamera.parameters
 //        mCamera.parameters.setPreviewSize(1088,1088)
 //        mCamera.parameters = parameters
-        mCamera.apply {
+        mCamera?.apply {
             try {
-
+//                parameters?.also {
+//                    it.setPreviewSize(1088, 1088)
+//                    requestLayout()
+//                    parameters = it
+//                }
                 val rotation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    CameraActivity.getRotationCompensation("0",context as CameraActivity,context).toInt()
+                    CameraActivity.getRotationCompensation("0", context as CameraActivity, context).toInt()
                 } else 90
                 setDisplayOrientation(rotation)
                 setPreviewDisplay(mHolder)
@@ -77,11 +83,50 @@ class CameraPreview(
         }
     }
 
+    fun setCamera(camera: Camera?){
+        if (mCamera == camera)
+            return
+
+        stopPreviewAndFreeCamera()
+
+        mCamera = camera
+
+        mCamera?.apply {
+            supportedPreviewSizes = parameters.supportedPreviewSizes
+            requestLayout()
+
+            try {
+                setPreviewDisplay(holder)
+            }catch (e: IOException){
+                Log.e("Set Camera",e.message)
+            }
+            startPreview()
+        }
+
+    }
+
+    private fun stopPreviewAndFreeCamera() {
+        mCamera?.apply {
+            // Call stopPreview() to stop updating the preview surface.
+            stopPreview()
+
+            // Important: Call release() to release the camera for use by other
+            // applications. Applications should release the camera immediately
+            // during onPause() and re-open() it during onResume()).
+            release()
+
+            mCamera = null
+        }
+    }
+
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val height = View.resolveSize(suggestedMinimumHeight,widthMeasureSpec)
         val width = View.resolveSize(suggestedMinimumWidth,heightMeasureSpec)
 
-        val ratio = mCamera.parameters.previewSize.width.toDouble()/mCamera.parameters.previewSize.height
+
+        val ratio = mCamera?.let {
+            it.parameters.previewSize.width.toDouble()/it.parameters.previewSize.height
+        } ?: 1.toDouble()
 
 //        setMeasuredDimension(mCamera.parameters.previewSize.height,mCamera.parameters.previewSize.width)
         setMeasuredDimension(height,(height*ratio).toInt())

@@ -121,9 +121,10 @@ class CameraActivity : AppCompatActivity() {
                     .subscribe{bitmap ->
 //                        val user = UserEntity()
                         val nameList = arrayListOf<String>()
+                        graphicOverlay.clear()
                         camera_preview.visibility = View.GONE
                         image_view.visibility = View.VISIBLE
-                        user.bitmap = bitmap
+                        user.image = data
 //                        image_view.setImageBitmap(bitmap.rotate(-rotation))
                         image_view.setImageBitmap(bitmap)
                         val image = FirebaseVisionImage.fromBitmap(bitmap)
@@ -132,7 +133,7 @@ class CameraActivity : AppCompatActivity() {
                                 .addOnSuccessListener{fbText ->
                                     Log.i("Text",fbText.text)
                                     fbText.let {
-                                        processTextRecognitionResult(it)
+//                                        processTextRecognitionResult(it)
                                         fbText.textBlocks.forEach changeBlock@{block ->
                                             val blockText = block.text
                                             if (isNameandDesignation(blockText))
@@ -285,9 +286,18 @@ class CameraActivity : AppCompatActivity() {
 
     private fun getCameraInstance(): Camera?{
         return try {
+            releaseCameraAndPreview()
             Camera.open(0)
         }catch (e: Exception){
             null
+        }
+    }
+
+    private fun releaseCameraAndPreview() {
+        cameraPreview?.setCamera(null)
+        camera?.also { cam ->
+            cam.release()
+            camera = null
         }
     }
 

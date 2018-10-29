@@ -2,7 +2,6 @@ package com.adrosonic.adroscanner.modules.camera
 
 import android.graphics.*
 import android.util.Log
-import com.google.firebase.ml.vision.text.FirebaseVisionText
 
 class RectGraphic internal constructor(overlay: GraphicOverlay): GraphicOverlay.Graphic(overlay) {
 
@@ -22,13 +21,13 @@ class RectGraphic internal constructor(overlay: GraphicOverlay): GraphicOverlay.
     override fun draw(canvas:Canvas) {
         Log.d(TAG, "on draw text graphic")
         // Draws the bounding box around the TextBlock.
-
-        val rect = RectF(BOUNDARY, BOUNDARY, canvas.width.toFloat() - BOUNDARY, canvas.height.toFloat() - BOUNDARY)
+        val boundary = canvas.width.toFloat()/6
+        Log.d(TAG,boundary.toString())
+        val rect = RectF(boundary, boundary, canvas.width.toFloat()-boundary, canvas.height.toFloat()-boundary)
         canvas.drawRect(rect, rectPaint)
     }
     companion object {
         private val TAG = "TextGraphic"
         private val STROKE_WIDTH = 4.0f
-        private var BOUNDARY = 300f
     }
 }

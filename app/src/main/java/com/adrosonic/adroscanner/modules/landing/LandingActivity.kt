@@ -17,6 +17,7 @@ import com.adrosonic.adroscanner.modules.login.MainActivity
 import com.adrosonic.adroscanner.R
 import com.adrosonic.adroscanner.databinding.ActivityLandingBinding
 import com.adrosonic.adroscanner.modules.camera.CameraActivity
+import kotlinx.android.synthetic.main.activity_landing.*
 
 class LandingActivity : AppCompatActivity() {
 
@@ -29,6 +30,10 @@ class LandingActivity : AppCompatActivity() {
         }
         else
             Toast.makeText(this,"Camera Not Present!!",Toast.LENGTH_SHORT).show()
+
+        floatingActionButton.setOnClickListener {
+            startActivity(Intent(this,CameraActivity::class.java))
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
