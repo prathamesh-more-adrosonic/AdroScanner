@@ -13,7 +13,7 @@ data class UserEntity(
         var email: String? = "",
         var address: String? = "",
         var website: String? = "",
-        var image: ByteArray? = byteArrayOf()) : Parcelable {
+        var imagePath: String? = "") : Parcelable {
     constructor(parcel: Parcel) : this(
             parcel.readString(),
             parcel.readString(),
@@ -22,7 +22,7 @@ data class UserEntity(
             parcel.readString(),
             parcel.readString(),
             parcel.readString(),
-            parcel.createByteArray()) {
+            parcel.readString()) {
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -33,41 +33,11 @@ data class UserEntity(
         parcel.writeString(email)
         parcel.writeString(address)
         parcel.writeString(website)
-        parcel.writeByteArray(image)
+        parcel.writeString(imagePath)
     }
 
     override fun describeContents(): Int {
         return 0
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as UserEntity
-
-        if (name != other.name) return false
-        if (jobTitle != other.jobTitle) return false
-        if (company != other.company) return false
-        if (phoneNumber != other.phoneNumber) return false
-        if (email != other.email) return false
-        if (address != other.address) return false
-        if (website != other.website) return false
-        if (!Arrays.equals(image, other.image)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = name?.hashCode() ?: 0
-        result = 31 * result + (jobTitle?.hashCode() ?: 0)
-        result = 31 * result + (company?.hashCode() ?: 0)
-        result = 31 * result + (phoneNumber?.hashCode() ?: 0)
-        result = 31 * result + (email?.hashCode() ?: 0)
-        result = 31 * result + (address?.hashCode() ?: 0)
-        result = 31 * result + (website?.hashCode() ?: 0)
-        result = 31 * result + (image?.let { Arrays.hashCode(it) } ?: 0)
-        return result
     }
 
     companion object CREATOR : Parcelable.Creator<UserEntity> {

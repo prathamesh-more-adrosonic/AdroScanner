@@ -19,6 +19,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.os.Build
+import android.os.Environment
 import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
@@ -35,6 +36,11 @@ import com.google.firebase.ml.vision.text.FirebaseVisionText
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class CameraActivity : AppCompatActivity() {
 
@@ -74,45 +80,49 @@ class CameraActivity : AppCompatActivity() {
                     .getCameraCharacteristics(cameraId)
                     .get(CameraCharacteristics.SENSOR_ORIENTATION)!!
             rotationCompensation = (rotationCompensation + sensorOrientation + 270) % 360
-
-            // Return the corresponding FirebaseVisionImageMetadata rotation value.
-//        val result: Int
-//        when (rotationCompensation) {
-//            0 -> result = FirebaseVisionImageMetadata.ROTATION_0
-//            90 -> result = FirebaseVisionImageMetadata.ROTATION_90
-//            180 -> result = FirebaseVisionImageMetadata.ROTATION_180
-//            270 -> result = FirebaseVisionImageMetadata.ROTATION_270
-//            else -> {
-//                result = FirebaseVisionImageMetadata.ROTATION_0
-//                Log.e("Bad rotation value",rotationCompensation.toString())
-//            }
-//        }
-//        return result
             return rotationCompensation.toFloat()
         }
 
         var rotation = 0f
+        var optimalSize: Camera.Size ?= null
+        var aspectRatio: Double = 1.0
+        var currentPhotoPath: String ?= ""
     }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
-        camera = getCameraInstance()
-        cameraPreview = camera?.let {
-            // Create our Preview view
-            CameraPreview(this, it)
-        }
-
-        @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-        rotation = getRotationCompensation("0",this,this)
-        // Set the Preview view as the content of our activity.
-        cameraPreview?.also {
-            camera_preview.addView(it)
-        }
-
-        val rectGraphic = RectGraphic(graphicOverlay)
-        graphicOverlay.add(rectGraphic)
+//        camera = getCameraInstance()
+//        camera?.apply {
+//            this.parameters?.also {params ->
+//                optimalSize = (CameraPreview::getOptimalPreviewSize)(CameraPreview(
+//                        this@CameraActivity,
+//                        this)
+//                        ,params.supportedPictureSizes
+//                        ,params.previewSize.width
+//                        ,params.previewSize.height)
+//                optimalSize?.let {
+//                    params.setPreviewSize(it.width, it.height)
+//                    aspectRatio = it.width.toDouble()/it.height
+//                }
+//                parameters = params
+//            }
+//        }
+//        cameraPreview = camera?.let {
+//            // Create our Preview view
+//            CameraPreview(this, it)
+//        }
+//
+//        @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+//        rotation = getRotationCompensation("0",this,this)
+//        // Set the Preview view as the content of our activity.
+//        cameraPreview?.also {
+//            camera_preview.addView(it)
+//        }
+//
+//        val rectGraphic = RectGraphic(graphicOverlay)
+//        graphicOverlay.add(rectGraphic)
         // Capturing the images
         val picture = PictureCallback { data, _ ->
             Observable.fromCallable{performImageProcessing(data)}
@@ -124,7 +134,7 @@ class CameraActivity : AppCompatActivity() {
                         graphicOverlay.clear()
                         camera_preview.visibility = View.GONE
                         image_view.visibility = View.VISIBLE
-                        user.image = data
+                        user.imagePath = currentPhotoPath
 //                        image_view.setImageBitmap(bitmap.rotate(-rotation))
                         image_view.setImageBitmap(bitmap)
                         val image = FirebaseVisionImage.fromBitmap(bitmap)
@@ -202,6 +212,8 @@ class CameraActivity : AppCompatActivity() {
                    camera?.takePicture(null, null, picture)
                    control.visibility = View.INVISIBLE
                    results_btn.visibility = View.VISIBLE
+               }else{
+                   Toast.makeText(this,"Auto Focus Failed",Toast.LENGTH_SHORT).show()
                }
             }
         }
@@ -215,7 +227,59 @@ class CameraActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+//        releaseCameraAndPreview()
+        camera = getCameraInstance()
+        camera?.apply {
+            this.parameters?.also {params ->
+                optimalSize = (CameraPreview::getOptimalPreviewSize)(CameraPreview(
+                        this@CameraActivity,
+                        this)
+                        ,params.supportedPictureSizes
+                        ,params.previewSize.width
+                        ,params.previewSize.height)
+                optimalSize?.let {
+                    params.setPreviewSize(it.width, it.height)
+                    aspectRatio = it.width.toDouble()/it.height
+                }
+                parameters = params
+            }
+        }
+        cameraPreview = camera?.let {
+            // Create our Preview view
+            CameraPreview(this, it)
+        }
+
+        @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+        rotation = getRotationCompensation("0",this,this)
+        // Set the Preview view as the content of our activity.
+        cameraPreview?.also {
+            camera_preview.addView(it)
+        }
+
+        val rectGraphic = RectGraphic(graphicOverlay)
+        graphicOverlay.add(rectGraphic)
+        // Capturing the images
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        camera?.release()
+        camera = null
+    }
+
     private fun performImageProcessing(data: ByteArray): Bitmap{
+        try {
+            val imageFile = createImageFile()
+            if (imageFile.exists()) imageFile.delete()
+            val fos = FileOutputStream(imageFile.path)
+            fos.write(data)
+            fos.close()
+        }catch (e: Exception) {
+            Log.e("File Save",e.message)
+        }
         val bitmap = getScaledBitmap(data,image_view.width,image_view.height)
 //        val bitmap = getScaledBitmap(data,camera_preview.width,(camera_preview.width*camera_preview.width)/camera_preview.height)
         return bitmap.rotate(rotation*2)
@@ -286,19 +350,20 @@ class CameraActivity : AppCompatActivity() {
 
     private fun getCameraInstance(): Camera?{
         return try {
-            releaseCameraAndPreview()
+//            releaseCameraAndPreview()
             Camera.open(0)
         }catch (e: Exception){
+            Log.e("Camera Instantiation",e.message)
             null
         }
     }
 
     private fun releaseCameraAndPreview() {
         cameraPreview?.setCamera(null)
-        camera?.also { cam ->
-            cam.release()
-            camera = null
-        }
+//        camera?.also { cam ->
+//            cam.release()
+//            camera = null
+//        }
     }
 
     private fun getScaledBitmap(originalImage: ByteArray, newWidth: Int,newHeight: Int): Bitmap{
@@ -329,5 +394,20 @@ class CameraActivity : AppCompatActivity() {
     fun Bitmap.rotate(degrees: Float): Bitmap {
         val matrix = Matrix().apply { postRotate(degrees) }
         return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+    }
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+                "JPEG_${timeStamp}_", /* prefix */
+                ".jpg", /* suffix */
+                storageDir /* directory */
+        ).apply {
+            // Save a file: path for use with ACTION_VIEW intents
+            currentPhotoPath = absolutePath
+        }
     }
 }

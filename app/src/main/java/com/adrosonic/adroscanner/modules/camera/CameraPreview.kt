@@ -23,19 +23,20 @@ class CameraPreview(
         setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS)
     }
 
-    var supportedPreviewSizes: MutableList<Camera.Size> ?= null
+    var supportedPreviewSizes: MutableList<Camera.Size> ?= mCamera?.parameters?.supportedPreviewSizes
+    var previewSize: Camera.Size ?= null
 
     override fun surfaceCreated(holder: SurfaceHolder) {
 
         // The Surface has been created, now tell the camera where to draw the preview.
-        mCamera?.apply {
-            try {
-                setPreviewDisplay(holder)
-                startPreview()
-            } catch (e: IOException) {
-                Log.d("setting preview",e.message)
-            }
-        }
+//        mCamera?.apply {
+//            try {
+//                setPreviewDisplay(holder)
+//                startPreview()
+//            } catch (e: IOException) {
+//                Log.d("setting preview",e.message)
+//            }
+//        }
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
@@ -61,16 +62,15 @@ class CameraPreview(
         // reformatting changes here
 
         // start preview with new settings
-//        val parameters = mCamera.parameters
-//        mCamera.parameters.setPreviewSize(1088,1088)
-//        mCamera.parameters = parameters
         mCamera?.apply {
             try {
-//                parameters?.also {
-//                    it.setPreviewSize(1088, 1088)
-//                    requestLayout()
-//                    parameters = it
-//                }
+                parameters?.also {params ->
+                    previewSize?.let {
+                        params.setPreviewSize(it.width,it.height)
+                    }
+                    requestLayout()
+                    parameters = params
+                }
                 val rotation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     CameraActivity.getRotationCompensation("0", context as CameraActivity, context).toInt()
                 } else 90
@@ -87,58 +87,60 @@ class CameraPreview(
         if (mCamera == camera)
             return
 
-        stopPreviewAndFreeCamera()
-
-        mCamera = camera
-
-        mCamera?.apply {
-            supportedPreviewSizes = parameters.supportedPreviewSizes
-            requestLayout()
-
-            try {
-                setPreviewDisplay(holder)
-            }catch (e: IOException){
-                Log.e("Set Camera",e.message)
-            }
-            startPreview()
-        }
+        mCamera?.stopPreview()
+//        mCamera = camera
+//
+//        mCamera?.apply {
+//            supportedPreviewSizes = parameters.supportedPreviewSizes
+//            previewSize = getOptimalPreviewSize(supportedPreviewSizes,resources.displayMetrics.widthPixels,resources.displayMetrics.heightPixels)
+//            parameters?.also {params ->
+//                previewSize?.let {
+//                    params.setPreviewSize(it.width, it.height)
+//                }
+//                requestLayout()
+//                parameters = params
+//            }
+//            requestLayout()
+//
+//            try {
+//                setPreviewDisplay(holder)
+//            }catch (e: IOException){
+//                Log.e("Set Camera",e.message)
+//            }
+//            startPreview()
+//        }
 
     }
 
-    private fun stopPreviewAndFreeCamera() {
-        mCamera?.apply {
-            // Call stopPreview() to stop updating the preview surface.
-            stopPreview()
-
-            // Important: Call release() to release the camera for use by other
-            // applications. Applications should release the camera immediately
-            // during onPause() and re-open() it during onResume()).
-            release()
-
-            mCamera = null
-        }
-    }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val height = View.resolveSize(suggestedMinimumHeight,widthMeasureSpec)
         val width = View.resolveSize(suggestedMinimumWidth,heightMeasureSpec)
 
-
-        val ratio = mCamera?.let {
-            it.parameters.previewSize.width.toDouble()/it.parameters.previewSize.height
-        } ?: 1.toDouble()
-
-//        setMeasuredDimension(mCamera.parameters.previewSize.height,mCamera.parameters.previewSize.width)
+        if (supportedPreviewSizes != null){
+            previewSize = getOptimalPreviewSize(supportedPreviewSizes,width,height)
+        }
+        val ratio = previewSize?.let {camSize -> camSize.width.toFloat()/camSize.height } ?: 1f
         setMeasuredDimension(height,(height*ratio).toInt())
-//        supportedPreviewSize.forEach {
-//            val ratio = (it.width/it.height).toDouble()
-//            if (Math.abs(ratio - targetRatio) > 0.1)
-//            return@forEach
-//            if (Math.abs(it.height - height) < Double.MAX_VALUE){
-//                val optimalRatio = (it.width/it.height).toFloat()
-//                setMeasuredDimension(it.height,(it.height*optimalRatio).toInt())
-//            }
-//        }
-//        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
+
+    fun getOptimalPreviewSize(sizes: List<Camera.Size>?, w: Int,h: Int): Camera.Size?{
+        val targetRatio = w.toDouble()/h
+        Log.i("Target Ratio",targetRatio.toString())
+        var optimalSize: Camera.Size ?= null
+        val currentRatio = mCamera?.parameters?.previewSize?.let { it.width.toDouble()/it.height }
+        var minDiff: Double = if (currentRatio != null) Math.abs(targetRatio - currentRatio) else Double.MAX_VALUE
+        sizes?.forEach { size ->
+            val ratio = size.width.toDouble()/size.height
+            if (Math.abs(ratio - targetRatio) < minDiff){
+                optimalSize = size
+                minDiff = Math.abs(ratio - targetRatio)
+            }
+        }
+        if (optimalSize == null){
+            optimalSize = mCamera?.parameters?.previewSize
+        }
+        return optimalSize
+    }
+
 }

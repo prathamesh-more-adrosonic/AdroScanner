@@ -39,7 +39,7 @@ class ResultActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this,PERMISSIONS,PERMISSION_ALL)
         }
         user = intent.getParcelableExtra("user")
-        val bitmap = BitmapFactory.decodeByteArray(user.image,0,user.image!!.size)
+        val bitmap = BitmapFactory.decodeFile(user.imagePath)
         imageViewResult.setImageBitmap(bitmap.rotate(180f))
         Log.i("Result",user.toString())
 //        if (user.bitmap != null)
