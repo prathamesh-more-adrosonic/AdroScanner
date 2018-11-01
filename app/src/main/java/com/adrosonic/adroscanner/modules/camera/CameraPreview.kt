@@ -67,6 +67,7 @@ class CameraPreview(
                 parameters?.also {params ->
                     previewSize?.let {
                         params.setPreviewSize(it.width,it.height)
+//                        params.setPictureSize(it.width, it.height)
                     }
                     requestLayout()
                     parameters = params
@@ -125,17 +126,22 @@ class CameraPreview(
     }
 
     fun getOptimalPreviewSize(sizes: List<Camera.Size>?, w: Int,h: Int): Camera.Size?{
-        val targetRatio = w.toDouble()/h
-        Log.i("Target Ratio",targetRatio.toString())
+//        val targetRatio = w.toDouble()/h
+//        Log.i("Target Ratio",targetRatio.toString())
         var optimalSize: Camera.Size ?= null
-        val currentRatio = mCamera?.parameters?.previewSize?.let { it.width.toDouble()/it.height }
-        var minDiff: Double = if (currentRatio != null) Math.abs(targetRatio - currentRatio) else Double.MAX_VALUE
+//        val currentRatio = mCamera?.parameters?.previewSize?.let { it.width.toDouble()/it.height }
+//        var minDiff: Double = if (currentRatio != null) Math.abs(targetRatio - currentRatio) else Double.MAX_VALUE
+        var minDiff: Double = Double.MAX_VALUE
         sizes?.forEach { size ->
             val ratio = size.width.toDouble()/size.height
-            if (Math.abs(ratio - targetRatio) < minDiff){
+            if (Math.abs(h*ratio - w) < minDiff){
                 optimalSize = size
-                minDiff = Math.abs(ratio - targetRatio)
+                minDiff = Math.abs(h*ratio - w)
             }
+//            if (Math.abs(ratio - targetRatio) < minDiff){
+//                optimalSize = size
+//                minDiff = Math.abs(ratio - targetRatio)
+//            }
         }
         if (optimalSize == null){
             optimalSize = mCamera?.parameters?.previewSize

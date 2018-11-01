@@ -2,8 +2,8 @@
     <string name="app_name">AdroScanner</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
-    <string name="signin">Signin</string>
-    <string name="signup">Signup</string>
+    <string name="signin">login</string>
+    <string name="signup">Click here to register</string>
     <string name="name">Name</string>
     <string name="logout">Logout</string>
 
@@ -20,6 +20,7 @@
     <string name="save">Save</string>
     <string name="company">Company</string>
     <string name="website">Website</string>
-    <string name="sign_in">SIGN IN</string>
+    <string name="sign_in">LOGIN</string>
     <string name="google">Google</string>
+    <string name="library">Library</string>
 </resources>

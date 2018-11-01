@@ -10,11 +10,13 @@ data class UserEntity(
         var jobTitle: String? = "",
         var company: String? = "",
         var phoneNumber: String? = "",
+        var phoneNumberAlt: String? = "",
         var email: String? = "",
         var address: String? = "",
         var website: String? = "",
         var imagePath: String? = "") : Parcelable {
     constructor(parcel: Parcel) : this(
+            parcel.readString(),
             parcel.readString(),
             parcel.readString(),
             parcel.readString(),
@@ -30,6 +32,7 @@ data class UserEntity(
         parcel.writeString(jobTitle)
         parcel.writeString(company)
         parcel.writeString(phoneNumber)
+        parcel.writeString(phoneNumberAlt)
         parcel.writeString(email)
         parcel.writeString(address)
         parcel.writeString(website)

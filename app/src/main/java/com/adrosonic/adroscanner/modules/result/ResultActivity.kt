@@ -8,6 +8,7 @@ import android.databinding.DataBindingUtil.setContentView
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.ContactsContract
@@ -18,6 +19,7 @@ import android.view.MenuItem
 import com.adrosonic.adroscanner.R
 import com.adrosonic.adroscanner.databinding.ActivityResultBinding
 import com.adrosonic.adroscanner.entity.UserEntity
+import com.adrosonic.adroscanner.modules.camera.CameraActivity
 import com.adrosonic.adroscanner.modules.landing.LandingActivity
 import com.google.android.gms.dynamic.IFragmentWrapper
 import kotlinx.android.synthetic.main.activity_result.*
@@ -26,24 +28,18 @@ class ResultActivity : AppCompatActivity() {
 
     private val ops = ArrayList<ContentProviderOperation>()
     private var user = UserEntity()
-    var PERMISSION_ALL = 1
-    val PERMISSIONS = arrayOf(
-            android.Manifest.permission.READ_CONTACTS,
-            android.Manifest.permission.WRITE_CONTACTS,
-            android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val activityResultBinding: ActivityResultBinding = setContentView(this,R.layout.activity_result)
-        if (!hasPermissions(this,PERMISSIONS)){
-            ActivityCompat.requestPermissions(this,PERMISSIONS,PERMISSION_ALL)
-        }
         user = intent.getParcelableExtra("user")
         val bitmap = BitmapFactory.decodeFile(user.imagePath)
-        imageViewResult.setImageBitmap(bitmap.rotate(180f))
+        imageViewResult.setImageBitmap(bitmap.rotate(
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                    CameraActivity.getRotationCompensation("0",this,this)*2
+                else
+                    180f))
         Log.i("Result",user.toString())
-//        if (user.bitmap != null)
-//        activityResultBinding.imageViewResult.setImageBitmap(user.bitmap)
         activityResultBinding.user = user
     }
 
@@ -77,6 +73,19 @@ class ResultActivity : AppCompatActivity() {
                     .build()
             )
         }
+        if(user.phoneNumberAlt != null)
+        {
+            ops.add(ContentProviderOperation.
+                    newInsert(ContactsContract.Data.CONTENT_URI)
+                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                    .withValue(ContactsContract.Data.MIMETYPE,
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+                    .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, user.phoneNumberAlt)
+                    .withValue(ContactsContract.CommonDataKinds.Phone.TYPE,
+                            ContactsContract.CommonDataKinds.Phone.TYPE_WORK_MOBILE)
+                    .build()
+            )
+        }
         if(user.email != null)
         {
             ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
@@ -101,7 +110,7 @@ class ResultActivity : AppCompatActivity() {
         }
         try {
             contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-            startActivity(Intent(this,LandingActivity::class.java))
+            startActivity(Intent(this,CameraActivity::class.java))
         } catch (e: Exception) {
             e.printStackTrace()
             //  Toast.makeText(myContext, "Exception: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -109,6 +118,7 @@ class ResultActivity : AppCompatActivity() {
 
 
     }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_result,menu)
         return true
@@ -124,23 +134,8 @@ class ResultActivity : AppCompatActivity() {
         }
     }
 
-    fun Bitmap.rotate(degrees: Float): Bitmap {
+    private fun Bitmap.rotate(degrees: Float): Bitmap {
         val matrix = Matrix().apply { postRotate(degrees) }
         return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
-    }
-
-    companion object {
-
-        @JvmStatic
-        fun hasPermissions(context: Context?,permissions: Array<String>?): Boolean{
-            if (context != null && permissions != null){
-                permissions.forEach {permission ->
-                    if (ActivityCompat.checkSelfPermission(context,permission) != PackageManager.PERMISSION_GRANTED){
-                        return false
-                    }
-                }
-            }
-            return true
-        }
     }
 }

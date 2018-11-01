@@ -20,16 +20,21 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicConvolve3x3
 import android.support.annotation.RequiresApi
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import com.adrosonic.adroscanner.App
 import com.adrosonic.adroscanner.R
 import com.adrosonic.adroscanner.modules.result.ResultActivity
 import com.adrosonic.adroscanner.entity.UserEntity
+import com.adrosonic.adroscanner.modules.login.MainActivity
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.text.FirebaseVisionText
@@ -84,122 +89,98 @@ class CameraActivity : AppCompatActivity() {
         }
 
         var rotation = 0f
-        var optimalSize: Camera.Size ?= null
-        var aspectRatio: Double = 1.0
         var currentPhotoPath: String ?= ""
+        private var RESULT_LOAD_IMAGE: Int = 1
     }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
-//        camera = getCameraInstance()
-//        camera?.apply {
-//            this.parameters?.also {params ->
-//                optimalSize = (CameraPreview::getOptimalPreviewSize)(CameraPreview(
-//                        this@CameraActivity,
-//                        this)
-//                        ,params.supportedPictureSizes
-//                        ,params.previewSize.width
-//                        ,params.previewSize.height)
-//                optimalSize?.let {
-//                    params.setPreviewSize(it.width, it.height)
-//                    aspectRatio = it.width.toDouble()/it.height
-//                }
-//                parameters = params
-//            }
-//        }
-//        cameraPreview = camera?.let {
-//            // Create our Preview view
-//            CameraPreview(this, it)
-//        }
-//
-//        @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-//        rotation = getRotationCompensation("0",this,this)
-//        // Set the Preview view as the content of our activity.
-//        cameraPreview?.also {
-//            camera_preview.addView(it)
-//        }
-//
-//        val rectGraphic = RectGraphic(graphicOverlay)
-//        graphicOverlay.add(rectGraphic)
+        user = UserEntity()
+
         // Capturing the images
         val picture = PictureCallback { data, _ ->
             Observable.fromCallable{performImageProcessing(data)}
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe{bitmap ->
-//                        val user = UserEntity()
-                        val nameList = arrayListOf<String>()
-                        graphicOverlay.clear()
+                        graphicOverlay.visibility = View.GONE
                         camera_preview.visibility = View.GONE
                         image_view.visibility = View.VISIBLE
                         user.imagePath = currentPhotoPath
-//                        image_view.setImageBitmap(bitmap.rotate(-rotation))
                         image_view.setImageBitmap(bitmap)
-                        val image = FirebaseVisionImage.fromBitmap(bitmap)
-                        val textRecognizer = FirebaseVision.getInstance().onDeviceTextRecognizer
-                        textRecognizer.processImage(image)
-                                .addOnSuccessListener{fbText ->
-                                    Log.i("Text",fbText.text)
-                                    fbText.let {
-//                                        processTextRecognitionResult(it)
-                                        fbText.textBlocks.forEach changeBlock@{block ->
-                                            val blockText = block.text
-                                            if (isNameandDesignation(blockText))
-                                                block.lines.forEach { line ->
-                                                    if (!line.text.contains(".co") && !line.text.contains("w."))
-                                                        nameList.add(line.text)
-                                                    else
-                                                        user.website += line.text
-                                                }
-                                            else
-                                                block.lines.forEach { line ->
-                                                    val lineText = line.text
-
-                                                    when {
-                                                        lineText.contains(".co") && lineText.contains("w.") -> user.website = lineText
-                                                        isPinCode(lineText) -> {
-                                                            user.address += lineText
-                                                        }
-                                                        lineText.contains("@") -> user.email += lineText
-                                                        isPhoneNumber(lineText) -> user.phoneNumber += lineText
-                                                    }
-
-                                                    Log.i("Lines", lineText)
-                                                }
-                                            Log.i("Blocks", blockText)
-                                        }
-                                        nameList.trimToSize()
-                                        if (nameList.isNotEmpty())
-                                            when (nameList.size){
-                                                1 -> user.name = nameList[0]
-                                                2 -> {
-                                                    user.name = nameList[0]
-                                                    user.jobTitle = nameList[1]
-                                                }
-                                                3 -> {
-                                                    user.name = nameList[1]
-                                                    user.jobTitle = nameList[2]
-                                                    user.company = nameList[0]
-                                                }
-                                                else -> {
-                                                    user.name = nameList.toString()
-                                                }
-                                            }
-                                    }
+                        Observable.fromCallable { processTextRecognitionResult(bitmap)}
+                                .subscribeOn(Schedulers.computation())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe {
+                                    results_btn.visibility = View.VISIBLE
                                 }
+//                        val nameList = arrayListOf<String>()
+//                        val numberList = arrayListOf<String>()
+//                        val image = FirebaseVisionImage.fromBitmap(bitmap)
+//                        val textRecognizer = FirebaseVision.getInstance().onDeviceTextRecognizer
+//                        textRecognizer.processImage(image)
+//                                .addOnSuccessListener{fbText ->
+//                                    Log.i("Text",fbText.text)
+//                                    fbText.let {
+//
+////                                        processTextRecognitionResult(it)
+//                                        fbText.textBlocks.forEach changeBlock@{block ->
+//                                            val blockText = block.text
+//                                            if (isNameandDesignation(blockText))
+//                                                block.lines.forEach { line ->
+//                                                    if (!line.text.contains(".co") && !line.text.contains("w."))
+//                                                        nameList.add(line.text)
+//                                                    else
+//                                                        user.website += line.text
+//                                                }
+//                                            else
+//                                                block.lines.forEach { line ->
+//                                                    val lineText = line.text
+//
+//                                                    when {
+//                                                        lineText.contains(".co") && lineText.contains("w.") -> user.website = lineText
+//                                                        isPinCode(lineText) -> {
+//                                                            user.address += lineText
+//                                                        }
+//                                                        lineText.contains("@") -> user.email += lineText
+//                                                        isPhoneNumber(lineText) -> numberList.add(lineText)
+//                                                    }
+//
+//                                                    Log.i("Lines", lineText)
+//                                                }
+//                                            Log.i("Blocks", blockText)
+//                                        }
+//                                        nameList.trimToSize()
+//                                        numberList.trimToSize()
+//                                        if (numberList.isNotEmpty())
+//                                            when(numberList.size){
+//                                                2 -> {
+//                                                    user.phoneNumber = numberList[0]
+//                                                    user.phoneNumberAlt = numberList[1]
+//                                                }
+//                                                else -> user.phoneNumber = numberList[0]
+//                                            }
+//                                        if (nameList.isNotEmpty())
+//                                            when (nameList.size){
+//                                                1 -> user.name = nameList[0]
+//                                                2 -> {
+//                                                    user.name = nameList[0]
+//                                                    user.jobTitle = nameList[1]
+//                                                }
+//                                                3 -> {
+//                                                    user.company = nameList[0]
+//                                                    user.name = nameList[1]
+//                                                    user.jobTitle = nameList[2]
+//                                                }
+//                                                else -> {
+//                                                    user.name = nameList.toString()
+//                                                }
+//                                            }
+//                                    }
+//                                }
                     }
-//            val bitmap = getScaledBitmap(data,camera_preview.height,camera_preview.width)
-//            val sharp: FloatArray =
-//                    floatArrayOf(0f, -1f, 0f,
-//                    -1f, 5f, -1f,
-//                    0f, -1f, 0f)
-//            bitmap = doSharp(bitmap,sharp)
-//            camera_preview.visibility = View.GONE
-//            image_view.visibility = View.VISIBLE
-//            val rotation = getRotationCompensation("0",this,this)
-//            image_view.setImageBitmap(bitmap.rotate(rotation))
         }
 
         camera_preview.setOnClickListener{
@@ -211,7 +192,6 @@ class CameraActivity : AppCompatActivity() {
                if (success) {
                    camera?.takePicture(null, null, picture)
                    control.visibility = View.INVISIBLE
-                   results_btn.visibility = View.VISIBLE
                }else{
                    Toast.makeText(this,"Auto Focus Failed",Toast.LENGTH_SHORT).show()
                }
@@ -231,28 +211,30 @@ class CameraActivity : AppCompatActivity() {
         super.onStart()
 //        releaseCameraAndPreview()
         camera = getCameraInstance()
-        camera?.apply {
-            this.parameters?.also {params ->
-                optimalSize = (CameraPreview::getOptimalPreviewSize)(CameraPreview(
-                        this@CameraActivity,
-                        this)
-                        ,params.supportedPictureSizes
-                        ,params.previewSize.width
-                        ,params.previewSize.height)
-                optimalSize?.let {
-                    params.setPreviewSize(it.width, it.height)
-                    aspectRatio = it.width.toDouble()/it.height
-                }
-                parameters = params
-            }
-        }
+//        camera?.apply {
+//            this.parameters?.also {params ->
+//                optimalSize = (CameraPreview::getOptimalPreviewSize)(CameraPreview(
+//                        this@CameraActivity,
+//                        this)
+//                        ,params.supportedPictureSizes
+//                        ,camera_preview.width
+//                        ,camera_preview.height)
+//                optimalSize?.let {
+//                    params.setPreviewSize(it.width, it.height)
+//                    aspectRatio = it.width.toDouble()/it.height
+//                }
+//                parameters = params
+//            }
+//        }
         cameraPreview = camera?.let {
             // Create our Preview view
             CameraPreview(this, it)
         }
 
-        @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-        rotation = getRotationCompensation("0",this,this)
+        rotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getRotationCompensation("0",this,this)
+        }else 90f
+
         // Set the Preview view as the content of our activity.
         cameraPreview?.also {
             camera_preview.addView(it)
@@ -280,8 +262,7 @@ class CameraActivity : AppCompatActivity() {
         }catch (e: Exception) {
             Log.e("File Save",e.message)
         }
-        val bitmap = getScaledBitmap(data,image_view.width,image_view.height)
-//        val bitmap = getScaledBitmap(data,camera_preview.width,(camera_preview.width*camera_preview.width)/camera_preview.height)
+        val bitmap = getScaledBitmap(data,camera_preview.width,camera_preview.height)
         return bitmap.rotate(rotation*2)
     }
 
@@ -330,22 +311,72 @@ class CameraActivity : AppCompatActivity() {
     private fun isEmailId(email: String): Boolean{
         return email.matches(Regex("([\\sa-zA-Z0-9_.]+)@([a-zA-Z0-9_.]+)\\.([a-zA-Z]{2,5})$"))
     }
-    private fun processTextRecognitionResult(text: FirebaseVisionText){
-        val blockTexts = text.textBlocks
-        if (blockTexts.isEmpty()) {
-            Toast.makeText(this, "No text detected", Toast.LENGTH_SHORT).show()
-            return
-        }
-//        graphicOverlay.rotation = -rotation
-        graphicOverlay.clear()
-        blockTexts.forEach { block ->
-            val lineTexts = block.lines
-            lineTexts.forEach {line ->
-//                line.boundingBox?.offset(0,(camera_preview.height - ((camera_preview.width*camera_preview.width)/camera_preview.height))/2)
-                val textGraphic = TextGraphic(graphicOverlay, line)
-                graphicOverlay.add(textGraphic)
-            }
-        }
+
+    private fun processTextRecognitionResult(bitmap: Bitmap){
+        val nameList = arrayListOf<String>()
+        val numberList = arrayListOf<String>()
+        val image = FirebaseVisionImage.fromBitmap(bitmap)
+        val textRecognizer = FirebaseVision.getInstance().onDeviceTextRecognizer
+        textRecognizer.processImage(image)
+                .addOnSuccessListener{fbText ->
+                    Log.i("Text",fbText.text)
+                    fbText.let {
+
+                        //                                        processTextRecognitionResult(it)
+                        fbText.textBlocks.forEach changeBlock@{block ->
+                            val blockText = block.text
+                            if (isNameandDesignation(blockText))
+                                block.lines.forEach { line ->
+                                    if (!line.text.contains(".co") && !line.text.contains("w."))
+                                        nameList.add(line.text)
+                                    else
+                                        user.website += line.text
+                                }
+                            else
+                                block.lines.forEach { line ->
+                                    val lineText = line.text
+
+                                    when {
+                                        lineText.contains(".co") && lineText.contains("w.") -> user.website = lineText
+                                        isPinCode(lineText) -> {
+                                            user.address += lineText
+                                        }
+                                        lineText.contains("@") -> user.email += lineText
+                                        isPhoneNumber(lineText) -> numberList.add(lineText)
+                                    }
+
+                                    Log.i("Lines", lineText)
+                                }
+                            Log.i("Blocks", blockText)
+                        }
+                        nameList.trimToSize()
+                        numberList.trimToSize()
+                        if (numberList.isNotEmpty())
+                            when(numberList.size){
+                                2 -> {
+                                    user.phoneNumber = numberList[0]
+                                    user.phoneNumberAlt = numberList[1]
+                                }
+                                else -> user.phoneNumber = numberList[0]
+                            }
+                        if (nameList.isNotEmpty())
+                            when (nameList.size){
+                                1 -> user.name = nameList[0]
+                                2 -> {
+                                    user.name = nameList[0]
+                                    user.jobTitle = nameList[1]
+                                }
+                                3 -> {
+                                    user.company = nameList[0]
+                                    user.name = nameList[1]
+                                    user.jobTitle = nameList[2]
+                                }
+                                else -> {
+                                    user.name = nameList.toString()
+                                }
+                            }
+                    }
+                }
     }
 
     private fun getCameraInstance(): Camera?{
@@ -370,28 +401,46 @@ class CameraActivity : AppCompatActivity() {
         Log.i("Image Size","${image_view.width}/${image_view.height}")
         Log.i("Preview Size","${camera_preview.width}/${camera_preview.height}")
         val bitmapImage = BitmapFactory.decodeByteArray(originalImage, 0, originalImage.size)
-        Log.i("Camera Size","${camera?.parameters?.previewSize?.width}/${camera?.parameters?.previewSize?.height}")
-        Log.i("Picture Size","${camera?.parameters?.pictureSize?.width}/${camera?.parameters?.pictureSize?.height}")
-        Log.i("BitMap Size","${bitmapImage.width}/${bitmapImage.height}")
-        val camWidth = bitmapImage.width
-        val camHeight = bitmapImage.height
-        val ratio = camWidth.toDouble()/camHeight
-        val offset = (newWidth*ratio) - newHeight
-        return if (offset > 0){
-            val newOffset = (offset*camWidth)/(newWidth*ratio)
-            val bitmapCrop = Bitmap.createBitmap(bitmapImage,0,0,camWidth-newOffset.toInt(),camHeight)
-            val mutableBitmapImage = Bitmap.createScaledBitmap(bitmapCrop,newHeight,newWidth,false)
-            bitmapImage.recycle()
-            mutableBitmapImage
-        }else{
-            Bitmap.createScaledBitmap(bitmapImage,newHeight,newWidth,false)
-        }
+//        camera?.parameters?.previewSize?.let {
+//            val aspectRatio = it.width.toDouble()/it.height
+//            val bitmapScaled = Bitmap.createScaledBitmap(bitmapImage,it.width,it.height,false)
+//            return if (newWidth* aspectRatio > newHeight) {
+//                val bitmapCrop = Bitmap.createBitmap(bitmapScaled, 0, 0, (it.height * (newWidth.toDouble() / newHeight)).toInt(), it.height)
+//                bitmapImage.recycle()
+//                bitmapScaled.recycle()
+//                Bitmap.createScaledBitmap(bitmapCrop, newHeight, newWidth, false)
+//            } else{
+//                val bitmapCrop = Bitmap.createBitmap(bitmapScaled, 0, 0, it.width, (it.width * (newHeight.toDouble() / newWidth)).toInt())
+//                bitmapImage.recycle()
+//                bitmapScaled.recycle()
+//                Bitmap.createScaledBitmap(bitmapCrop, newHeight, newWidth, false)
+//            }
+//        }
+//        Log.i("Camera Size","${camera?.parameters?.previewSize?.width}/${camera?.parameters?.previewSize?.height}")
+//        Log.i("Picture Size","${camera?.parameters?.pictureSize?.width}/${camera?.parameters?.pictureSize?.height}")
+//        Log.i("BitMap Size","${bitmapImage.width}/${bitmapImage.height}")
+//        val pictureRatio = bitmapImage.width.toDouble()/bitmapImage.height
+//        if (newWidth* aspectRatio > newHeight)
+//            val bitmapCrop = Bitmap.createBitmap(bitmapImage,0,0,,bitmapImage.height)
+//        val camWidth = bitmapImage.width
+//        val camHeight = bitmapImage.height
+//        val ratio = camWidth.toDouble()/camHeight
+//        val offset = (newWidth*ratio) - newHeight
+//        return if (offset > 0){
+//            val newOffset = (offset*camWidth)/(newWidth*ratio)
+//            val bitmapCrop = Bitmap.createBitmap(bitmapImage,0,0,camWidth-newOffset.toInt(),camHeight)
+//            val mutableBitmapImage = Bitmap.createScaledBitmap(bitmapCrop,newHeight,newWidth,false)
+//            bitmapImage.recycle()
+//            mutableBitmapImage
+//        }else{
+            return Bitmap.createScaledBitmap(bitmapImage,newHeight,newWidth,false)
+//        }
 //        bitmapCrop.recycle()
 
 //        return bitmapCrop
     }
 
-    fun Bitmap.rotate(degrees: Float): Bitmap {
+    private fun Bitmap.rotate(degrees: Float): Bitmap {
         val matrix = Matrix().apply { postRotate(degrees) }
         return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
     }
@@ -408,6 +457,50 @@ class CameraActivity : AppCompatActivity() {
         ).apply {
             // Save a file: path for use with ACTION_VIEW intents
             currentPhotoPath = absolutePath
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_landing,menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        return when (item?.itemId){
+            R.id.menuLogout -> {
+                try {
+                    (application.applicationContext as App).auth.signOut()
+                    val intent = Intent(this, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                    true
+                }catch (e: Exception){
+                    Log.e("Logout Landing",e.message)
+                    false
+                }
+            }
+            R.id.menuLib -> {
+                startActivityForResult(Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI), RESULT_LOAD_IMAGE)
+                true
+            }
+            else -> false
+        }
+    }
+
+    override fun onBackPressed() {
+
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == RESULT_LOAD_IMAGE && resultCode == Activity.RESULT_OK && null != data){
+            val uri = data.data.let { it } ?: return
+            val filePathColumn = MediaStore.Images.Media.DATA
+            val cursor = contentResolver.query(uri, arrayOf(filePathColumn),null,null,null)
+            cursor?.moveToFirst()
+            currentPhotoPath = cursor?.getString(cursor.getColumnIndex(filePathColumn))
+            cursor?.close()
         }
     }
 }
