@@ -34,11 +34,12 @@ class ResultActivity : AppCompatActivity() {
         val activityResultBinding: ActivityResultBinding = setContentView(this,R.layout.activity_result)
         user = intent.getParcelableExtra("user")
         val bitmap = BitmapFactory.decodeFile(user.imagePath)
-        imageViewResult.setImageBitmap(bitmap.rotate(
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-                    CameraActivity.getRotationCompensation("0",this,this)*2
-                else
-                    180f))
+//        imageViewResult.setImageBitmap(bitmap.rotate(
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+//                    CameraActivity.getRotationCompensation("0",this,this)*2
+//                else
+//                    180f))
+        imageViewResult.setImageBitmap(bitmap)
         Log.i("Result",user.toString())
         activityResultBinding.user = user
     }
@@ -137,5 +138,10 @@ class ResultActivity : AppCompatActivity() {
     private fun Bitmap.rotate(degrees: Float): Bitmap {
         val matrix = Matrix().apply { postRotate(degrees) }
         return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+    }
+
+    override fun onBackPressed() {
+        startActivity(Intent(this,CameraActivity::class.java))
+        finish()
     }
 }

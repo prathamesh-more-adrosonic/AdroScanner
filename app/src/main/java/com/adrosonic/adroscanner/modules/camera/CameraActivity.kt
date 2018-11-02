@@ -41,6 +41,7 @@ import com.google.firebase.ml.vision.text.FirebaseVisionText
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -187,6 +188,10 @@ class CameraActivity : AppCompatActivity() {
             camera?.autoFocus { _, _ ->  }
         }
 
+        control.library.setOnClickListener {
+            startActivityForResult(Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI), RESULT_LOAD_IMAGE)
+        }
+
         control.picture.setOnClickListener {
             camera?.autoFocus { success, camera ->
                if (success) {
@@ -257,7 +262,12 @@ class CameraActivity : AppCompatActivity() {
             val imageFile = createImageFile()
             if (imageFile.exists()) imageFile.delete()
             val fos = FileOutputStream(imageFile.path)
-            fos.write(data)
+            val bitmap = BitmapFactory.decodeByteArray(data,0,data.size)
+//            bitmap.rotate(-rotation*2)
+            val bos = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG,100,bos)
+            fos.write(bos.toByteArray())
+            bitmap.recycle()
             fos.close()
         }catch (e: Exception) {
             Log.e("File Save",e.message)
@@ -479,10 +489,6 @@ class CameraActivity : AppCompatActivity() {
                     false
                 }
             }
-            R.id.menuLib -> {
-                startActivityForResult(Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI), RESULT_LOAD_IMAGE)
-                true
-            }
             else -> false
         }
     }
@@ -500,6 +506,19 @@ class CameraActivity : AppCompatActivity() {
             val cursor = contentResolver.query(uri, arrayOf(filePathColumn),null,null,null)
             cursor?.moveToFirst()
             currentPhotoPath = cursor?.getString(cursor.getColumnIndex(filePathColumn))
+            val bitmap = BitmapFactory.decodeFile(currentPhotoPath)
+            graphicOverlay.visibility = View.GONE
+            camera_preview.visibility = View.GONE
+            image_view.visibility = View.VISIBLE
+            user.imagePath = currentPhotoPath
+            image_view.setImageBitmap(bitmap)
+            Observable.fromCallable { processTextRecognitionResult(bitmap)}
+                    .subscribeOn(Schedulers.computation())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe {
+                        control.visibility = View.INVISIBLE
+                        results_btn.visibility = View.VISIBLE
+                    }
             cursor?.close()
         }
     }
