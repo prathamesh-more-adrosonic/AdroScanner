@@ -1,5 +1,6 @@
 package com.adrosonic.adroscanner.modules.camera
 
+import android.animation.ValueAnimator
 import android.hardware.Camera
 import android.hardware.Camera.PictureCallback
 import android.support.v7.app.AppCompatActivity
@@ -8,7 +9,6 @@ import kotlinx.android.synthetic.main.activity_camera.*
 import android.util.Log
 import kotlinx.android.synthetic.main.activity_camera.view.*
 import android.util.SparseIntArray
-import android.view.Surface
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraAccessException
@@ -26,18 +26,19 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicConvolve3x3
 import android.support.annotation.RequiresApi
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.view.*
+import android.view.animation.AnimationUtils
+import android.view.animation.LinearInterpolator
+import android.view.animation.RotateAnimation
 import android.widget.Toast
 import com.adrosonic.adroscanner.App
 import com.adrosonic.adroscanner.R
+import com.adrosonic.adroscanner.Util.RectGraphic
 import com.adrosonic.adroscanner.modules.result.ResultActivity
 import com.adrosonic.adroscanner.entity.UserEntity
 import com.adrosonic.adroscanner.modules.login.MainActivity
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
-import com.google.firebase.ml.vision.text.FirebaseVisionText
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -52,6 +53,7 @@ class CameraActivity : AppCompatActivity() {
 
     private var camera: Camera? = null
     private var cameraPreview: CameraPreview? = null
+    private var orientationEventListener: OrientationEventListener? = null
 
     companion object {
         var user = UserEntity()
@@ -92,6 +94,8 @@ class CameraActivity : AppCompatActivity() {
         var rotation = 0f
         var currentPhotoPath: String ?= ""
         private var RESULT_LOAD_IMAGE: Int = 1
+        var align = "portrait"
+        var angle = 0f
     }
 
 
@@ -99,6 +103,67 @@ class CameraActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
         user = UserEntity()
+
+        orientationEventListener = object : OrientationEventListener(this){
+            override fun onOrientationChanged(orientation: Int) {
+                when (orientation) {
+                    in 45..134 -> {
+                        if (align != "landscape")
+                        {
+                            align = "landscape"
+                            spin(-90f)
+                            Log.i("Orientation", "Landscape $orientation")
+//                            val animation = AnimationUtils.loadAnimation(this@CameraActivity,R.anim.rotate)
+//                            control.library.startAnimation(animation)
+                        }
+                    }
+                    in 135..224 ->{
+//                        if (align != "reverse portrait")
+//                        {
+//                            align = "reverse portrait"
+//                            spin(90f)
+//                            Log.i("Orientation","Reverse Portrait $orientation")
+//                            val animation = AnimationUtils.loadAnimation(this@CameraActivity,R.anim.rotate)
+//                            control.library.startAnimation(animation)
+//                        }
+                    }
+                    in 225..314 ->{
+                        if (align != "reverse landscape")
+                        {
+                            align = "reverse landscape"
+                            spin(90f)
+                            Log.i("Orientation","Reverse Landscape $orientation")
+//                            val animation = AnimationUtils.loadAnimation(this@CameraActivity,R.anim.rotate)
+//                            control.library.startAnimation(animation)
+                        }
+                    }
+                    in 315..360 -> {
+                        if (align != "portrait")
+                        {
+                            align = "portrait"
+                            spin(0f)
+                            Log.i("Orientation","Portrait $orientation")
+//                            val animation = AnimationUtils.loadAnimation(this@CameraActivity,R.anim.rotate)
+//                            control.library.startAnimation(animation)
+                        }
+                    }
+                    in 0..45 -> {
+                        if (align != "portrait")
+                        {
+                            align = "portrait"
+                            spin(0f)
+                            Log.i("Orientation","Portrait $orientation")
+//                            val animation = AnimationUtils.loadAnimation(this@CameraActivity,R.anim.rotate)
+//                            control.library.startAnimation(animation)
+                        }
+                    }
+                    else -> {
+                        Log.i("Orientation","Invalid $orientation")
+                    }
+                }
+            }
+
+        }
 
         // Capturing the images
         val picture = PictureCallback { data, _ ->
@@ -117,70 +182,6 @@ class CameraActivity : AppCompatActivity() {
                                 .subscribe {
                                     results_btn.visibility = View.VISIBLE
                                 }
-//                        val nameList = arrayListOf<String>()
-//                        val numberList = arrayListOf<String>()
-//                        val image = FirebaseVisionImage.fromBitmap(bitmap)
-//                        val textRecognizer = FirebaseVision.getInstance().onDeviceTextRecognizer
-//                        textRecognizer.processImage(image)
-//                                .addOnSuccessListener{fbText ->
-//                                    Log.i("Text",fbText.text)
-//                                    fbText.let {
-//
-////                                        processTextRecognitionResult(it)
-//                                        fbText.textBlocks.forEach changeBlock@{block ->
-//                                            val blockText = block.text
-//                                            if (isNameandDesignation(blockText))
-//                                                block.lines.forEach { line ->
-//                                                    if (!line.text.contains(".co") && !line.text.contains("w."))
-//                                                        nameList.add(line.text)
-//                                                    else
-//                                                        user.website += line.text
-//                                                }
-//                                            else
-//                                                block.lines.forEach { line ->
-//                                                    val lineText = line.text
-//
-//                                                    when {
-//                                                        lineText.contains(".co") && lineText.contains("w.") -> user.website = lineText
-//                                                        isPinCode(lineText) -> {
-//                                                            user.address += lineText
-//                                                        }
-//                                                        lineText.contains("@") -> user.email += lineText
-//                                                        isPhoneNumber(lineText) -> numberList.add(lineText)
-//                                                    }
-//
-//                                                    Log.i("Lines", lineText)
-//                                                }
-//                                            Log.i("Blocks", blockText)
-//                                        }
-//                                        nameList.trimToSize()
-//                                        numberList.trimToSize()
-//                                        if (numberList.isNotEmpty())
-//                                            when(numberList.size){
-//                                                2 -> {
-//                                                    user.phoneNumber = numberList[0]
-//                                                    user.phoneNumberAlt = numberList[1]
-//                                                }
-//                                                else -> user.phoneNumber = numberList[0]
-//                                            }
-//                                        if (nameList.isNotEmpty())
-//                                            when (nameList.size){
-//                                                1 -> user.name = nameList[0]
-//                                                2 -> {
-//                                                    user.name = nameList[0]
-//                                                    user.jobTitle = nameList[1]
-//                                                }
-//                                                3 -> {
-//                                                    user.company = nameList[0]
-//                                                    user.name = nameList[1]
-//                                                    user.jobTitle = nameList[2]
-//                                                }
-//                                                else -> {
-//                                                    user.name = nameList.toString()
-//                                                }
-//                                            }
-//                                    }
-//                                }
                     }
         }
 
@@ -251,10 +252,16 @@ class CameraActivity : AppCompatActivity() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        orientationEventListener?.enable()
+    }
+
     override fun onPause() {
-        super.onPause()
+        orientationEventListener?.disable()
         camera?.release()
         camera = null
+        super.onPause()
     }
 
     private fun performImageProcessing(data: ByteArray): Bitmap{
@@ -304,7 +311,7 @@ class CameraActivity : AppCompatActivity() {
         return phoneText.matches(Regex("(\\+?)(\\([0-9OoA]{3}\\))?([\\s-0-9OoA]+)\$")) && phoneText.length > 6
     }
 
-    private  fun doSharp(original: Bitmap, radius : FloatArray): Bitmap{
+    private fun doSharp(original: Bitmap, radius : FloatArray): Bitmap{
         val bitmap = Bitmap.createBitmap(original.width,original.height,Bitmap.Config.ARGB_8888)
         val renderScript = RenderScript.create(this)
         val allocIn = Allocation.createFromBitmap(renderScript,original)
@@ -405,6 +412,22 @@ class CameraActivity : AppCompatActivity() {
 //            cam.release()
 //            camera = null
 //        }
+    }
+
+    private fun spin(rotationAngle: Float){
+        // 1
+        val valueAnimator = ValueAnimator.ofFloat(angle, rotationAngle)
+        angle = rotationAngle
+        valueAnimator.addUpdateListener {
+            val value = it.animatedValue as Float
+            // 2
+            control.library.rotation = value
+        }
+
+        valueAnimator.interpolator = LinearInterpolator()
+        valueAnimator.duration = 1000
+        valueAnimator.start()
+
     }
 
     private fun getScaledBitmap(originalImage: ByteArray, newWidth: Int,newHeight: Int): Bitmap{

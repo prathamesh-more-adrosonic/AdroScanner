@@ -34,8 +34,7 @@
         </activity>
         <activity android:name=".modules.register.RegisterActivity" />
         <activity android:name=".modules.landing.LandingActivity" />
-        <activity android:name=".modules.camera.CameraActivity"
-            android:screenOrientation="portrait" />
+        <activity android:name=".modules.camera.CameraActivity" />
         <activity android:name=".modules.result.ResultActivity"/>
     </application>
 
