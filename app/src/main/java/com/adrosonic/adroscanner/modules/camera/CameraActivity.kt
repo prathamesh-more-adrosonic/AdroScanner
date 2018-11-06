@@ -113,19 +113,10 @@ class CameraActivity : AppCompatActivity() {
                             align = "landscape"
                             spin(-90f)
                             Log.i("Orientation", "Landscape $orientation")
-//                            val animation = AnimationUtils.loadAnimation(this@CameraActivity,R.anim.rotate)
-//                            control.library.startAnimation(animation)
                         }
                     }
-                    in 135..224 ->{
-//                        if (align != "reverse portrait")
-//                        {
-//                            align = "reverse portrait"
-//                            spin(90f)
-//                            Log.i("Orientation","Reverse Portrait $orientation")
-//                            val animation = AnimationUtils.loadAnimation(this@CameraActivity,R.anim.rotate)
-//                            control.library.startAnimation(animation)
-//                        }
+                    in 135..224 -> {
+
                     }
                     in 225..314 ->{
                         if (align != "reverse landscape")
@@ -133,8 +124,6 @@ class CameraActivity : AppCompatActivity() {
                             align = "reverse landscape"
                             spin(90f)
                             Log.i("Orientation","Reverse Landscape $orientation")
-//                            val animation = AnimationUtils.loadAnimation(this@CameraActivity,R.anim.rotate)
-//                            control.library.startAnimation(animation)
                         }
                     }
                     in 315..360 -> {
@@ -143,8 +132,6 @@ class CameraActivity : AppCompatActivity() {
                             align = "portrait"
                             spin(0f)
                             Log.i("Orientation","Portrait $orientation")
-//                            val animation = AnimationUtils.loadAnimation(this@CameraActivity,R.anim.rotate)
-//                            control.library.startAnimation(animation)
                         }
                     }
                     in 0..45 -> {
@@ -153,8 +140,6 @@ class CameraActivity : AppCompatActivity() {
                             align = "portrait"
                             spin(0f)
                             Log.i("Orientation","Portrait $orientation")
-//                            val animation = AnimationUtils.loadAnimation(this@CameraActivity,R.anim.rotate)
-//                            control.library.startAnimation(animation)
                         }
                     }
                     else -> {
@@ -280,7 +265,7 @@ class CameraActivity : AppCompatActivity() {
             Log.e("File Save",e.message)
         }
         val bitmap = getScaledBitmap(data,camera_preview.width,camera_preview.height)
-        return bitmap.rotate(rotation*2)
+        return bitmap.rotate(rotation- angle)
     }
 
     private fun isPinCode(pin: String): Boolean{
