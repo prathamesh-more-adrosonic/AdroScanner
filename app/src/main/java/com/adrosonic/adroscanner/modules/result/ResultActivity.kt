@@ -34,12 +34,9 @@ class ResultActivity : AppCompatActivity() {
         val activityResultBinding: ActivityResultBinding = setContentView(this,R.layout.activity_result)
         user = intent.getParcelableExtra("user")
         val bitmap = BitmapFactory.decodeFile(user.imagePath)
-//        imageViewResult.setImageBitmap(bitmap.rotate(
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-//                    CameraActivity.getRotationCompensation("0",this,this)*2
-//                else
-//                    180f))
-        imageViewResult.setImageBitmap(bitmap)
+        user.rotation?.let {
+            imageViewResult.setImageBitmap(bitmap.rotate(it))
+        }
         Log.i("Result",user.toString())
         activityResultBinding.user = user
     }

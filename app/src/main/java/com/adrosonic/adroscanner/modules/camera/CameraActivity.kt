@@ -1,5 +1,6 @@
 package com.adrosonic.adroscanner.modules.camera
 
+import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
 import android.hardware.Camera
 import android.hardware.Camera.PictureCallback
@@ -39,6 +40,7 @@ import com.adrosonic.adroscanner.entity.UserEntity
 import com.adrosonic.adroscanner.modules.login.MainActivity
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
+import com.google.firebase.ml.vision.text.FirebaseVisionText
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -156,16 +158,17 @@ class CameraActivity : AppCompatActivity() {
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe{bitmap ->
-                        graphicOverlay.visibility = View.GONE
-                        camera_preview.visibility = View.GONE
-                        image_view.visibility = View.VISIBLE
                         user.imagePath = currentPhotoPath
-                        image_view.setImageBitmap(bitmap)
-                        Observable.fromCallable { processTextRecognitionResult(bitmap)}
-                                .subscribeOn(Schedulers.computation())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe {
-                                    results_btn.visibility = View.VISIBLE
+                        val image = FirebaseVisionImage.fromBitmap(bitmap)
+                        val textRecognizer = FirebaseVision.getInstance().onDeviceTextRecognizer
+                        textRecognizer.processImage(image)
+                                .addOnSuccessListener {
+                                    processTextRecognitionResult(it)
+                                    val resultIntent = Intent(this, ResultActivity::class.java)
+                                    val bundle = Bundle()
+                                    bundle.putParcelable("user",user)
+                                    resultIntent.putExtras(bundle)
+                                    startActivity(resultIntent)
                                 }
                     }
         }
@@ -187,14 +190,6 @@ class CameraActivity : AppCompatActivity() {
                    Toast.makeText(this,"Auto Focus Failed",Toast.LENGTH_SHORT).show()
                }
             }
-        }
-
-        results_btn.setOnClickListener {
-            val resultIntent = Intent(this, ResultActivity::class.java)
-            val bundle = Bundle()
-            bundle.putParcelable("user",user)
-            resultIntent.putExtras(bundle)
-            startActivity(resultIntent)
         }
     }
 
@@ -250,22 +245,15 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun performImageProcessing(data: ByteArray): Bitmap{
-        try {
-            val imageFile = createImageFile()
-            if (imageFile.exists()) imageFile.delete()
-            val fos = FileOutputStream(imageFile.path)
-            val bitmap = BitmapFactory.decodeByteArray(data,0,data.size)
-//            bitmap.rotate(-rotation*2)
-            val bos = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG,100,bos)
-            fos.write(bos.toByteArray())
-            bitmap.recycle()
-            fos.close()
-        }catch (e: Exception) {
-            Log.e("File Save",e.message)
-        }
-        val bitmap = getScaledBitmap(data,camera_preview.width,camera_preview.height)
-        return bitmap.rotate(rotation- angle)
+        val imageFile = createImageFile()
+        if (imageFile.exists()) imageFile.delete()
+        val fos = FileOutputStream(imageFile.path)
+        val bitmap = BitmapFactory.decodeByteArray(data,0,data.size)
+        bitmap.compress(Bitmap.CompressFormat.JPEG,100,fos)
+        fos.flush()
+        fos.close()
+        user.rotation = rotation - angle
+        return bitmap.rotate(rotation - angle)
     }
 
     private fun isPinCode(pin: String): Boolean{
@@ -314,71 +302,64 @@ class CameraActivity : AppCompatActivity() {
         return email.matches(Regex("([\\sa-zA-Z0-9_.]+)@([a-zA-Z0-9_.]+)\\.([a-zA-Z]{2,5})$"))
     }
 
-    private fun processTextRecognitionResult(bitmap: Bitmap){
+    private fun processTextRecognitionResult(fbText: FirebaseVisionText){
         val nameList = arrayListOf<String>()
         val numberList = arrayListOf<String>()
-        val image = FirebaseVisionImage.fromBitmap(bitmap)
-        val textRecognizer = FirebaseVision.getInstance().onDeviceTextRecognizer
-        textRecognizer.processImage(image)
-                .addOnSuccessListener{fbText ->
-                    Log.i("Text",fbText.text)
-                    fbText.let {
+        Log.i("Text",fbText.text)
+        fbText.let {
+            fbText.textBlocks.forEach changeBlock@{block ->
+                val blockText = block.text
+                if (isNameandDesignation(blockText))
+                    block.lines.forEach { line ->
+                        if (!line.text.contains(".co") && !line.text.contains("w."))
+                            nameList.add(line.text)
+                        else
+                            user.website += line.text
+                    }
+                else
+                    block.lines.forEach { line ->
+                        val lineText = line.text
 
-                        //                                        processTextRecognitionResult(it)
-                        fbText.textBlocks.forEach changeBlock@{block ->
-                            val blockText = block.text
-                            if (isNameandDesignation(blockText))
-                                block.lines.forEach { line ->
-                                    if (!line.text.contains(".co") && !line.text.contains("w."))
-                                        nameList.add(line.text)
-                                    else
-                                        user.website += line.text
-                                }
-                            else
-                                block.lines.forEach { line ->
-                                    val lineText = line.text
-
-                                    when {
-                                        lineText.contains(".co") && lineText.contains("w.") -> user.website = lineText
-                                        isPinCode(lineText) -> {
-                                            user.address += lineText
-                                        }
-                                        lineText.contains("@") -> user.email += lineText
-                                        isPhoneNumber(lineText) -> numberList.add(lineText)
-                                    }
-
-                                    Log.i("Lines", lineText)
-                                }
-                            Log.i("Blocks", blockText)
+                        when {
+                            lineText.contains(".co") && lineText.contains("w.") -> user.website = lineText
+                            isPinCode(lineText) -> {
+                                user.address += lineText
+                            }
+                            lineText.contains("@") -> user.email += lineText
+                            isPhoneNumber(lineText) -> numberList.add(lineText)
                         }
-                        nameList.trimToSize()
-                        numberList.trimToSize()
-                        if (numberList.isNotEmpty())
-                            when(numberList.size){
-                                2 -> {
-                                    user.phoneNumber = numberList[0]
-                                    user.phoneNumberAlt = numberList[1]
-                                }
-                                else -> user.phoneNumber = numberList[0]
-                            }
-                        if (nameList.isNotEmpty())
-                            when (nameList.size){
-                                1 -> user.name = nameList[0]
-                                2 -> {
-                                    user.name = nameList[0]
-                                    user.jobTitle = nameList[1]
-                                }
-                                3 -> {
-                                    user.company = nameList[0]
-                                    user.name = nameList[1]
-                                    user.jobTitle = nameList[2]
-                                }
-                                else -> {
-                                    user.name = nameList.toString()
-                                }
-                            }
+
+                        Log.i("Lines", lineText)
+                    }
+                Log.i("Blocks", blockText)
+            }
+            nameList.trimToSize()
+            numberList.trimToSize()
+            if (numberList.isNotEmpty())
+                when(numberList.size){
+                    2 -> {
+                        user.phoneNumber = numberList[0]
+                        user.phoneNumberAlt = numberList[1]
+                    }
+                    else -> user.phoneNumber = numberList[0]
+                }
+            if (nameList.isNotEmpty())
+                when (nameList.size){
+                    1 -> user.name = nameList[0]
+                    2 -> {
+                        user.name = nameList[0]
+                        user.jobTitle = nameList[1]
+                    }
+                    3 -> {
+                        user.company = nameList[0]
+                        user.name = nameList[1]
+                        user.jobTitle = nameList[2]
+                    }
+                    else -> {
+                        user.name = nameList.toString()
                     }
                 }
+        }
     }
 
     private fun getCameraInstance(): Camera?{
@@ -389,14 +370,6 @@ class CameraActivity : AppCompatActivity() {
             Log.e("Camera Instantiation",e.message)
             null
         }
-    }
-
-    private fun releaseCameraAndPreview() {
-        cameraPreview?.setCamera(null)
-//        camera?.also { cam ->
-//            cam.release()
-//            camera = null
-//        }
     }
 
     private fun spin(rotationAngle: Float){
@@ -517,15 +490,15 @@ class CameraActivity : AppCompatActivity() {
             val bitmap = BitmapFactory.decodeFile(currentPhotoPath)
             graphicOverlay.visibility = View.GONE
             camera_preview.visibility = View.GONE
+            control.visibility = View.INVISIBLE
             image_view.visibility = View.VISIBLE
             user.imagePath = currentPhotoPath
             image_view.setImageBitmap(bitmap)
-            Observable.fromCallable { processTextRecognitionResult(bitmap)}
-                    .subscribeOn(Schedulers.computation())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe {
-                        control.visibility = View.INVISIBLE
-                        results_btn.visibility = View.VISIBLE
+            val image = FirebaseVisionImage.fromBitmap(bitmap)
+            val textRecognizer = FirebaseVision.getInstance().onDeviceTextRecognizer
+            textRecognizer.processImage(image)
+                    .addOnSuccessListener{
+                        processTextRecognitionResult(it)
                     }
             cursor?.close()
         }

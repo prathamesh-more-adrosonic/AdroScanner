@@ -14,7 +14,8 @@ data class UserEntity(
         var email: String? = "",
         var address: String? = "",
         var website: String? = "",
-        var imagePath: String? = "") : Parcelable {
+        var imagePath: String? = "",
+        var rotation: Float? = 0f) : Parcelable {
     constructor(parcel: Parcel) : this(
             parcel.readString(),
             parcel.readString(),
@@ -24,7 +25,8 @@ data class UserEntity(
             parcel.readString(),
             parcel.readString(),
             parcel.readString(),
-            parcel.readString()) {
+            parcel.readString(),
+            parcel.readValue(Float::class.java.classLoader) as? Float) {
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -37,6 +39,7 @@ data class UserEntity(
         parcel.writeString(address)
         parcel.writeString(website)
         parcel.writeString(imagePath)
+        parcel.writeValue(rotation)
     }
 
     override fun describeContents(): Int {
