@@ -1,20 +1,17 @@
-package com.adrosonic.adroscanner.Util
+package com.adrosonic.adroscanner.util
 
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
+import android.graphics.*
 import android.util.Log
-import com.google.firebase.ml.vision.text.FirebaseVisionText
 
-class TextGraphic internal constructor(overlay: GraphicOverlay, private val line: FirebaseVisionText.Line): GraphicOverlay.Graphic(overlay) {
+class RectGraphic internal constructor(overlay: GraphicOverlay): GraphicOverlay.Graphic(overlay) {
 
     private val rectPaint: Paint = Paint()
 
     init{
-        rectPaint.color = Color.argb(50,255,213,0)
-        rectPaint.style = Paint.Style.FILL
+        rectPaint.color = Color.BLACK
+        rectPaint.style = Paint.Style.STROKE
         rectPaint.strokeWidth = STROKE_WIDTH
+        rectPaint.pathEffect = DashPathEffect(floatArrayOf(40f,40f),0f)
         // Redraw the overlay, as this graphic has been added.
         postInvalidate()
     }
@@ -24,7 +21,9 @@ class TextGraphic internal constructor(overlay: GraphicOverlay, private val line
     override fun draw(canvas:Canvas) {
         Log.d(TAG, "on draw text graphic")
         // Draws the bounding box around the TextBlock.
-        val rect = RectF(line.boundingBox)
+        val boundary = canvas.width.toFloat()/6
+        Log.d(TAG,boundary.toString())
+        val rect = RectF(boundary, boundary, canvas.width.toFloat()-boundary, canvas.height.toFloat()-boundary)
         canvas.drawRect(rect, rectPaint)
     }
     companion object {

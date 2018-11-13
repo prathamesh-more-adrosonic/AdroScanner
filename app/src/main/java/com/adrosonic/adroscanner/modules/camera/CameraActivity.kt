@@ -1,40 +1,36 @@
 package com.adrosonic.adroscanner.modules.camera
 
-import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
-import android.hardware.Camera
-import android.hardware.Camera.PictureCallback
-import android.support.v7.app.AppCompatActivity
-import android.os.Bundle
-import kotlinx.android.synthetic.main.activity_camera.*
-import android.util.Log
-import kotlinx.android.synthetic.main.activity_camera.view.*
-import android.util.SparseIntArray
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CameraAccessException
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
+import android.hardware.Camera
+import android.hardware.Camera.PictureCallback
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CameraAccessException
 import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicConvolve3x3
+import android.support.v7.app.AppCompatActivity
 import android.support.annotation.RequiresApi
+import android.os.Bundle
+import android.util.Log
+import kotlinx.android.synthetic.main.activity_camera.*
+import kotlinx.android.synthetic.main.activity_camera.view.*
+import android.util.SparseIntArray
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.view.*
-import android.view.animation.AnimationUtils
 import android.view.animation.LinearInterpolator
-import android.view.animation.RotateAnimation
 import android.widget.Toast
 import com.adrosonic.adroscanner.App
 import com.adrosonic.adroscanner.R
-import com.adrosonic.adroscanner.Util.RectGraphic
+import com.adrosonic.adroscanner.util.*
 import com.adrosonic.adroscanner.modules.result.ResultActivity
 import com.adrosonic.adroscanner.entity.UserEntity
 import com.adrosonic.adroscanner.modules.login.MainActivity
@@ -44,9 +40,7 @@ import com.google.firebase.ml.vision.text.FirebaseVisionText
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
-import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -66,7 +60,7 @@ class CameraActivity : AppCompatActivity() {
          */
         @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
         @Throws(CameraAccessException::class)
-        fun getRotationCompensation(cameraId: String, activity: Activity, context: Context): Float {
+        fun getRotationCompensation(cameraId: String, activity: AppCompatActivity, context: Context): Float {
 
             val ORIENTATIONS = SparseIntArray()
 
@@ -98,6 +92,7 @@ class CameraActivity : AppCompatActivity() {
         private var RESULT_LOAD_IMAGE: Int = 1
         var align = "portrait"
         var angle = 0f
+        var image: Bitmap ?= null
     }
 
 
@@ -158,12 +153,15 @@ class CameraActivity : AppCompatActivity() {
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe{bitmap ->
-                        user.imagePath = currentPhotoPath
+                        image = bitmap
+                        progressBar.progress = 50
+//                        user.imagePath = currentPhotoPath
                         val image = FirebaseVisionImage.fromBitmap(bitmap)
                         val textRecognizer = FirebaseVision.getInstance().onDeviceTextRecognizer
                         textRecognizer.processImage(image)
                                 .addOnSuccessListener {
                                     processTextRecognitionResult(it)
+                                    progressBar.progress = 100
                                     val resultIntent = Intent(this, ResultActivity::class.java)
                                     val bundle = Bundle()
                                     bundle.putParcelable("user",user)
@@ -186,6 +184,8 @@ class CameraActivity : AppCompatActivity() {
                if (success) {
                    camera?.takePicture(null, null, picture)
                    control.visibility = View.INVISIBLE
+                   progressBar.visibility = View.VISIBLE
+                   graphicOverlay.clear()
                }else{
                    Toast.makeText(this,"Auto Focus Failed",Toast.LENGTH_SHORT).show()
                }
@@ -245,14 +245,14 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun performImageProcessing(data: ByteArray): Bitmap{
-        val imageFile = createImageFile()
-        if (imageFile.exists()) imageFile.delete()
-        val fos = FileOutputStream(imageFile.path)
+//        val imageFile = createImageFile()
+//        if (imageFile.exists()) imageFile.delete()
+//        val fos = FileOutputStream(imageFile.path)
         val bitmap = BitmapFactory.decodeByteArray(data,0,data.size)
-        bitmap.compress(Bitmap.CompressFormat.JPEG,100,fos)
-        fos.flush()
-        fos.close()
-        user.rotation = rotation - angle
+//        bitmap.compress(Bitmap.CompressFormat.JPEG,100,fos)
+//        fos.flush()
+//        fos.close()
+//        user.rotation = rotation - angle
         return bitmap.rotate(rotation - angle)
     }
 
@@ -277,6 +277,8 @@ class CameraActivity : AppCompatActivity() {
                 .replace("phone","")
                 .replace("cell","")
                 .replace("c","")
+                .replace("t","")
+                .replace("f","")
 
         phoneText.replace("o","0")
                 .replace("t","1")
@@ -307,7 +309,7 @@ class CameraActivity : AppCompatActivity() {
         val numberList = arrayListOf<String>()
         Log.i("Text",fbText.text)
         fbText.let {
-            fbText.textBlocks.forEach changeBlock@{block ->
+            fbText.textBlocks.forEach {block ->
                 val blockText = block.text
                 if (isNameandDesignation(blockText))
                     block.lines.forEach { line ->
@@ -317,7 +319,7 @@ class CameraActivity : AppCompatActivity() {
                             user.website += line.text
                     }
                 else
-                    block.lines.forEach { line ->
+                    block.lines.forEach lineBlock@{ line ->
                         val lineText = line.text
 
                         when {
@@ -327,6 +329,21 @@ class CameraActivity : AppCompatActivity() {
                             }
                             lineText.contains("@") -> user.email += lineText
                             isPhoneNumber(lineText) -> numberList.add(lineText)
+                            else -> {
+                                line.elements.forEach {element ->
+
+                                    val elementText = element.text
+                                    when {
+                                        elementText.contains(".co") && elementText.contains("w.") -> user.website = elementText
+                                        isPinCode(elementText) -> {
+                                            user.address += lineText
+                                            return@lineBlock
+                                        }
+                                        elementText.contains("@") -> user.email += elementText
+                                        isPhoneNumber(elementText) -> numberList.add(elementText)
+                                    }
+                                }
+                            }
                         }
 
                         Log.i("Lines", lineText)
@@ -348,7 +365,7 @@ class CameraActivity : AppCompatActivity() {
                     1 -> user.name = nameList[0]
                     2 -> {
                         user.name = nameList[0]
-                        user.jobTitle = nameList[1]
+                        user.company = nameList[1]
                     }
                     3 -> {
                         user.company = nameList[0]
@@ -356,7 +373,9 @@ class CameraActivity : AppCompatActivity() {
                         user.jobTitle = nameList[2]
                     }
                     else -> {
-                        user.name = nameList.toString()
+                        user.name = nameList[0]
+                        user.jobTitle = nameList[1]
+                        user.company = nameList.subList(2,nameList.size - 1).toString()
                     }
                 }
         }
@@ -481,7 +500,8 @@ class CameraActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == RESULT_LOAD_IMAGE && resultCode == Activity.RESULT_OK && null != data){
+        if (requestCode == RESULT_LOAD_IMAGE && resultCode == AppCompatActivity.RESULT_OK && null != data){
+            progressBar.visibility = View.VISIBLE
             val uri = data.data.let { it } ?: return
             val filePathColumn = MediaStore.Images.Media.DATA
             val cursor = contentResolver.query(uri, arrayOf(filePathColumn),null,null,null)
@@ -492,13 +512,20 @@ class CameraActivity : AppCompatActivity() {
             camera_preview.visibility = View.GONE
             control.visibility = View.INVISIBLE
             image_view.visibility = View.VISIBLE
-            user.imagePath = currentPhotoPath
+//            user.imagePath = currentPhotoPath
+            image = bitmap
             image_view.setImageBitmap(bitmap)
             val image = FirebaseVisionImage.fromBitmap(bitmap)
             val textRecognizer = FirebaseVision.getInstance().onDeviceTextRecognizer
             textRecognizer.processImage(image)
                     .addOnSuccessListener{
                         processTextRecognitionResult(it)
+                        progressBar.progress = 100
+                        val resultIntent = Intent(this, ResultActivity::class.java)
+                        val bundle = Bundle()
+                        bundle.putParcelable("user",user)
+                        resultIntent.putExtras(bundle)
+                        startActivity(resultIntent)
                     }
             cursor?.close()
         }

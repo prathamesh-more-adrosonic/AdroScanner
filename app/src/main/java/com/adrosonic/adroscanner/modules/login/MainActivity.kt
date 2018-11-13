@@ -73,6 +73,10 @@ class MainActivity : AppCompatActivity(){
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
     }
 
+    override fun onBackPressed() {
+
+    }
+
     companion object {
 
         @JvmStatic

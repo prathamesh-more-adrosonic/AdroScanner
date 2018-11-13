@@ -1,4 +1,4 @@
-package com.adrosonic.adroscanner.Util
+package com.adrosonic.adroscanner.util
 
 import android.content.Context
 import android.graphics.Canvas
