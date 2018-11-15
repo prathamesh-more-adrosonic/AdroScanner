@@ -13,8 +13,8 @@ import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicConvolve3x3
-import android.support.v7.app.AppCompatActivity
-import android.support.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import androidx.annotation.RequiresApi
 import android.os.Bundle
 import android.util.Log
 import kotlinx.android.synthetic.main.activity_camera.*

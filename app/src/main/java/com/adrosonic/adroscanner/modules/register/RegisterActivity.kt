@@ -1,8 +1,8 @@
 package com.adrosonic.adroscanner.modules.register
 
 import android.content.Intent
-import android.databinding.DataBindingUtil.setContentView
-import android.support.v7.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil.setContentView
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View

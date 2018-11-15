@@ -2,13 +2,13 @@ package com.adrosonic.adroscanner.modules.result
 
 import android.content.ContentProviderOperation
 import android.content.Intent
-import android.databinding.DataBindingUtil.setContentView
+import androidx.databinding.DataBindingUtil.setContentView
 import android.graphics.Bitmap
 import android.graphics.Matrix
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.ContactsContract
-import android.support.v7.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
