@@ -22,13 +22,16 @@ import kotlinx.android.synthetic.main.activity_camera.view.*
 import android.util.SparseIntArray
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.view.*
 import android.view.animation.LinearInterpolator
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import com.adrosonic.adroscanner.App
+import com.adrosonic.adroscanner.App.Companion.hasPermissions
 import com.adrosonic.adroscanner.R
 import com.adrosonic.adroscanner.util.*
 import com.adrosonic.adroscanner.modules.result.ResultActivity
@@ -52,6 +55,8 @@ class CameraActivity : AppCompatActivity() {
     private var camera: Camera? = null
     private var cameraPreview: CameraPreview? = null
     private var orientationEventListener: OrientationEventListener? = null
+    var PERMISSION_ALL = 1
+    val PERMISSIONS = arrayOf(android.Manifest.permission.CAMERA)
 
     companion object {
         var user = UserEntity()
@@ -101,6 +106,16 @@ class CameraActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
+
+        if ((applicationContext as App).checkCameraHardware(this)){
+            if (!hasPermissions(this,PERMISSIONS)){
+                ActivityCompat.requestPermissions(this,PERMISSIONS,PERMISSION_ALL)
+            }
+        }
+        else
+            Toast.makeText(this,"Camera Not Present!!",Toast.LENGTH_SHORT).show()
+
+
         user = UserEntity()
 
         orientationEventListener = object : OrientationEventListener(this){
@@ -363,12 +378,10 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun spin(rotationAngle: Float){
-        // 1
         val valueAnimator = ValueAnimator.ofFloat(angle, rotationAngle)
         angle = rotationAngle
         valueAnimator.addUpdateListener {
             val value = it.animatedValue as Float
-            // 2
             control.library.rotation = value
         }
 
@@ -465,7 +478,33 @@ class CameraActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
+    }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode){
+            PERMISSION_ALL -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    camera = getCameraInstance()
+                    cameraPreview = camera?.let {
+                        // Create our Preview view
+                        CameraPreview(this, it)
+                    }
+
+                    rotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        getRotationCompensation("0",this,this)
+                    }else 90f
+
+                    // Set the Preview view as the content of our activity.
+                    cameraPreview?.also {
+                        camera_preview.addView(it)
+                    }
+
+                    val rectGraphic = RectGraphic(graphicOverlay)
+                    graphicOverlay.add(rectGraphic)
+                }
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

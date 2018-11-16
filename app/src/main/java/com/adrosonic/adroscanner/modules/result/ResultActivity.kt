@@ -12,6 +12,9 @@ import androidx.appcompat.app.AlertDialog
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import com.adrosonic.adroscanner.App
 import com.adrosonic.adroscanner.R
 import com.adrosonic.adroscanner.databinding.ActivityResultBinding
 import com.adrosonic.adroscanner.entity.UserEntity
@@ -22,10 +25,22 @@ class ResultActivity : AppCompatActivity() {
 
     private val ops = ArrayList<ContentProviderOperation>()
     private var user = UserEntity()
+    var PERMISSION_ALL = 1
+    val PERMISSIONS = arrayOf(
+            android.Manifest.permission.READ_CONTACTS,
+            android.Manifest.permission.WRITE_CONTACTS,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val activityResultBinding: ActivityResultBinding = setContentView(this,R.layout.activity_result)
+        if ((applicationContext as App).checkCameraHardware(this)){
+            if (!App.hasPermissions(this, PERMISSIONS)){
+                ActivityCompat.requestPermissions(this,PERMISSIONS,PERMISSION_ALL)
+            }
+        }
+        else
+            Toast.makeText(this,"Camera Not Present!!", Toast.LENGTH_SHORT).show()
         user = intent.getParcelableExtra("user")
         imageViewResult.maxHeight = windowManager.defaultDisplay.height/3
         imageViewResult.setImageBitmap(CameraActivity.image)

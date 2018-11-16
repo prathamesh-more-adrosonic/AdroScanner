@@ -19,24 +19,10 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity(){
 
     private lateinit var activityMainBinding: ActivityMainBinding
-    var PERMISSION_ALL = 1
-    val PERMISSIONS = arrayOf(
-            android.Manifest.permission.CAMERA,
-            android.Manifest.permission.READ_CONTACTS,
-            android.Manifest.permission.WRITE_CONTACTS,
-            android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         activityMainBinding = setContentView(this, R.layout.activity_main)
-
-        if (checkCameraHardware(this)){
-            if (!hasPermissions(this,PERMISSIONS)){
-                ActivityCompat.requestPermissions(this,PERMISSIONS,PERMISSION_ALL)
-            }
-        }
-        else
-            Toast.makeText(this,"Camera Not Present!!",Toast.LENGTH_SHORT).show()
 
         val auth = (application.applicationContext as App).auth
         if (auth.currentUser != null){
@@ -68,27 +54,8 @@ class MainActivity : AppCompatActivity(){
         }
     }
 
-    //check if the device has camera
-    private fun checkCameraHardware(context: Context): Boolean{
-        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
-    }
 
     override fun onBackPressed() {
 
-    }
-
-    companion object {
-
-        @JvmStatic
-        fun hasPermissions(context: Context?,permissions: Array<String>?): Boolean{
-            if (context != null && permissions != null){
-                permissions.forEach {permission ->
-                    if (ActivityCompat.checkSelfPermission(context,permission) != PackageManager.PERMISSION_GRANTED){
-                        return false
-                    }
-                }
-            }
-            return true
-        }
     }
 }
