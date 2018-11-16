@@ -34,6 +34,8 @@ import com.adrosonic.adroscanner.util.*
 import com.adrosonic.adroscanner.modules.result.ResultActivity
 import com.adrosonic.adroscanner.entity.UserEntity
 import com.adrosonic.adroscanner.modules.login.MainActivity
+import com.adrosonic.adroscanner.util.RegexMatcher.Companion.isPhoneNumber
+import com.adrosonic.adroscanner.util.RegexMatcher.Companion.isPinCode
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.text.FirebaseVisionText
@@ -256,35 +258,7 @@ class CameraActivity : AppCompatActivity() {
         return bitmap.rotate(rotation - angle)
     }
 
-    private fun isPinCode(pin: String): Boolean{
-        val pinText = pin.filter { it.isDigit() }
-        return pinText.isNotEmpty() && pinText.length < 7
-    }
 
-    private fun isNameandDesignation(text: String): Boolean{
-        return text.isNotEmpty() && !text.contains("@") && !text.any { it.isDigit() && !text.contains(".co") && !text.contains("w.")}
-    }
-
-    private fun isPhoneNumber(phone: String): Boolean{
-
-        val phoneText = phone.toLowerCase()
-                .replace(".","")
-                .replace(":","")
-                .replace(",","")
-                .replace("mob","")
-                .replace("mobile","")
-                .replace("tel","")
-                .replace("phone","")
-                .replace("cell","")
-                .replace("c","")
-                .replace("t","")
-                .replace("f","")
-
-        phoneText.replace("o","0")
-                .replace("t","1")
-
-        return phoneText.matches(Regex("(\\+?)(\\([0-9OoA]{3}\\))?([\\s-0-9OoA]+)\$")) && phoneText.length > 6
-    }
 
     private fun doSharp(original: Bitmap, radius : FloatArray): Bitmap{
         val bitmap = Bitmap.createBitmap(original.width,original.height,Bitmap.Config.ARGB_8888)
@@ -300,10 +274,6 @@ class CameraActivity : AppCompatActivity() {
         return bitmap
     }
 
-    private fun isEmailId(email: String): Boolean{
-        return email.matches(Regex("([\\sa-zA-Z0-9_.]+)@([a-zA-Z0-9_.]+)\\.([a-zA-Z]{2,5})$"))
-    }
-
     private fun processTextRecognitionResult(fbText: FirebaseVisionText){
         val nameList = arrayListOf<String>()
         val numberList = arrayListOf<String>()
@@ -311,7 +281,8 @@ class CameraActivity : AppCompatActivity() {
         fbText.let {
             fbText.textBlocks.forEach {block ->
                 val blockText = block.text
-                if (isNameandDesignation(blockText))
+
+                if (RegexMatcher.isNameandDesignation(blockText))
                     block.lines.forEach { line ->
                         if (!line.text.contains(".co") && !line.text.contains("w."))
                             nameList.add(line.text)
@@ -458,8 +429,8 @@ class CameraActivity : AppCompatActivity() {
     @Throws(IOException::class)
     private fun createImageFile(): File {
         // Create an image file name
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        val storageDir: File = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ENGLISH).format(Date())
+        val storageDir: File ?= getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         return File.createTempFile(
                 "JPEG_${timeStamp}_", /* prefix */
                 ".jpg", /* suffix */
