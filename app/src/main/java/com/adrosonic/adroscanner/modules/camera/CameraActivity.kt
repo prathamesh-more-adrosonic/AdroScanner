@@ -296,9 +296,10 @@ class CameraActivity : AppCompatActivity() {
         fbText.let {
             fbText.textBlocks.forEach {block ->
                 val blockText = block.text
-
+                Log.i("BlockText",blockText)
                 if (RegexMatcher.isNameandDesignation(blockText))
                     block.lines.forEach { line ->
+                        Log.i("LineText",line.text)
                         if (!line.text.contains(".co") && !line.text.contains("w."))
                             nameList.add(line.text)
                         else
@@ -307,7 +308,7 @@ class CameraActivity : AppCompatActivity() {
                 else
                     block.lines.forEach lineBlock@{ line ->
                         val lineText = line.text
-
+                        Log.i("LineText",lineText)
                         when {
                             lineText.contains(".co") && lineText.contains("w.") -> user.website = lineText
                             isPinCode(lineText) -> {
@@ -317,8 +318,8 @@ class CameraActivity : AppCompatActivity() {
                             isPhoneNumber(lineText) -> numberList.add(lineText)
                             else -> {
                                 line.elements.forEach {element ->
-
                                     val elementText = element.text
+                                    Log.i("ElementText",elementText)
                                     when {
                                         elementText.contains(".co") && elementText.contains("w.") -> user.website = elementText
                                         isPinCode(elementText) -> {
@@ -331,10 +332,7 @@ class CameraActivity : AppCompatActivity() {
                                 }
                             }
                         }
-
-                        Log.i("Lines", lineText)
                     }
-                Log.i("Blocks", blockText)
             }
             nameList.trimToSize()
             numberList.trimToSize()

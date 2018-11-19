@@ -35,9 +35,8 @@ class RegexMatcher{
 
         fun isPinCode(pin: String): Boolean{
             val pinText = pin.filter { it.isDigit() }
-            return pinText.isNotEmpty() && pinText.length < 7
+            return pinText.isNotEmpty() && pinText.length < 7 && pin.length/2 > pinText.length
         }
-
     }
 
 }

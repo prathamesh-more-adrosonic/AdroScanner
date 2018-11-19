@@ -44,11 +44,6 @@ class ResultActivity : AppCompatActivity() {
         user = intent.getParcelableExtra("user")
         imageViewResult.maxHeight = windowManager.defaultDisplay.height/3
         imageViewResult.setImageBitmap(CameraActivity.image)
-//        val bitmap = BitmapFactory.decodeFile(user.imagePath)
-//
-//        user.rotation?.let {
-//            imageViewResult.setImageBitmap(bitmap.rotate(it))
-//        }
         Log.i("Result",user.toString())
         activityResultBinding.user = user
     }
