@@ -19,7 +19,14 @@ import com.adrosonic.adroscanner.R
 import com.adrosonic.adroscanner.databinding.ActivityResultBinding
 import com.adrosonic.adroscanner.entity.UserEntity
 import com.adrosonic.adroscanner.modules.camera.CameraActivity
+import com.salesforce.androidsdk.app.SalesforceSDKManager
+import com.salesforce.androidsdk.rest.ClientManager
+import com.salesforce.androidsdk.rest.RestClient
+import com.salesforce.androidsdk.rest.RestRequest
+import com.salesforce.androidsdk.rest.RestResponse
 import kotlinx.android.synthetic.main.activity_result.*
+import okhttp3.MediaType
+import okhttp3.RequestBody
 
 class ResultActivity : AppCompatActivity() {
 
@@ -136,6 +143,28 @@ class ResultActivity : AppCompatActivity() {
 
     }
 
+//    private fun createLeads(){
+//        SalesforceSDKManager.getInstance().clientManager.getRestClient(this,object: ClientManager.RestClientCallback{
+//            override fun authenticatedRestClient(client: RestClient?) {
+//                val request = RestRequest(RestRequest.RestMethod.POST,
+//                        "/services/apexrest/TataTrusts/PRM/newLeadService/",
+//                        RequestBody.create(MediaType.parse("application/json"),
+//                                "{\"data\":\"data\"}"))
+//                client?.sendAsync(request,object: RestClient.AsyncRequestCallback{
+//                    override fun onSuccess(request: RestRequest?, response: RestResponse?) {
+//                        Log.i("Send Async",response.toString())
+//                    }
+//
+//                    override fun onError(exception: java.lang.Exception?) {
+//                        Log.i("Send Async",exception?.message)
+//                    }
+//
+//                })
+//            }
+//
+//        })
+//    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_result,menu)
         return true
@@ -145,6 +174,7 @@ class ResultActivity : AppCompatActivity() {
         return when (item?.itemId){
             R.id.menuSave -> {
                 saveContacts()
+//                createLeads()
                 return true
             }
             else -> false

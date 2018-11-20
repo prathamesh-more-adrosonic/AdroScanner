@@ -273,8 +273,6 @@ class CameraActivity : AppCompatActivity() {
         return bitmap.rotate(rotation - angle)
     }
 
-
-
     private fun doSharp(original: Bitmap, radius : FloatArray): Bitmap{
         val bitmap = Bitmap.createBitmap(original.width,original.height,Bitmap.Config.ARGB_8888)
         val renderScript = RenderScript.create(this)

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="remoteAccessConsumerKey">3MVG9Nvmjd9lcjRllF6WP5wJcVW1ltdlrkR_krzDDafZ05PwIkYwjgaFlv58IEvLS2y9ZoaUHatOiZzrPcStT</string>
+    <string name="oauthRedirectURI">sdfc://adrosonic.com/prm/salesforce/mobileconnect</string>
+    <string-array name="oauthScopes">
+        <item>api</item>
+		<item>web</item>
+    </string-array>
+    <string name="androidPushNotificationClientId"></string>
+</resources>
