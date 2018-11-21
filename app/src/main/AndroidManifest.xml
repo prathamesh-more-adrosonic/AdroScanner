@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.adrosonic.adroscanner">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_CONTACTS"/>
-    <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -18,27 +17,31 @@
     <application
         android:name=".App"
         android:allowBackup="true"
+        android:fullBackupContent="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:theme="@style/AppTheme"
-        android:fullBackupContent="true">
+        android:theme="@style/AppTheme">
         <meta-data
             android:name="com.google.firebase.ml.vision.DEPENDENCIES"
             android:value="ocr" />
 
         <activity android:name=".modules.login.MainActivity">
+
+        </activity>
+        <activity android:name=".modules.register.RegisterActivity" />
+        <activity android:name=".modules.landing.LandingActivity" />
+        <activity
+            android:name=".modules.camera.CameraActivity"
+            android:screenOrientation="portrait" />
+        <activity android:name=".modules.result.ResultActivity" />
+        <activity android:name=".modules.login.LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".modules.register.RegisterActivity" />
-        <activity android:name=".modules.landing.LandingActivity" />
-        <activity android:name=".modules.camera.CameraActivity"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".modules.result.ResultActivity"/>
     </application>
 
 </manifest>
