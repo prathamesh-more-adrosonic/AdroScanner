@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "C:\\AdroScan\\AdroScanner\\app\\build\\intermediates\\incremental\\mergeDebugResources\\stripped.dir\\layout\\activity_main.xml",
+        "source": "C:\\AdroScan\\AdroScanner\\app\\src\\main\\res\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\AdroScan\\AdroScanner\\app\\build\\intermediates\\incremental\\mergeDebugResources\\stripped.dir\\layout\\activity_landing.xml",
+        "source": "C:\\AdroScan\\AdroScanner\\app\\src\\main\\res\\layout\\activity_landing.xml"
+    },
+    {
+        "merged": "C:\\AdroScan\\AdroScanner\\app\\build\\intermediates\\incremental\\mergeDebugResources\\stripped.dir\\layout\\activity_register.xml",
+        "source": "C:\\AdroScan\\AdroScanner\\app\\src\\main\\res\\layout\\activity_register.xml"
+    },
+    {
+        "merged": "C:\\AdroScan\\AdroScanner\\app\\build\\intermediates\\incremental\\mergeDebugResources\\stripped.dir\\layout\\activity_result.xml",
+        "source": "C:\\AdroScan\\AdroScanner\\app\\src\\main\\res\\layout\\activity_result.xml"
+    }
+]

@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Gradle: com.salesforce.mobilesdk:SalesforceSDK-6.2.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-1/files-1.1/jetified-SalesforceSDK-6.2.0.aar/f08d478ca358ba87410558b3f26b98d6/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-1/files-1.1/jetified-SalesforceSDK-6.2.0.aar/f08d478ca358ba87410558b3f26b98d6/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.salesforce.mobilesdk/SalesforceSDK/6.2.0/a58148208f10ace4f91ca0f280b3f7077d9e7406/SalesforceSDK-6.2.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
